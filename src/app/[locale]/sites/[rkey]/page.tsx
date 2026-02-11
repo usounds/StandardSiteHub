@@ -13,6 +13,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { verifySite } from '@/lib/verification';
 import { verifyDocument, VerificationResult } from '@/app/actions/verify';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 interface DocumentRecord {
     uri: string;
@@ -203,123 +204,125 @@ export default function PublicationDocumentsPage() {
     ));
 
     return (
-        <Container size="lg" py="xl">
-            <Breadcrumbs mb="lg">{items}</Breadcrumbs>
+        <AuthGuard>
+            <Container size="lg" py="xl">
+                <Breadcrumbs mb="lg">{items}</Breadcrumbs>
 
-            <Group justify="space-between" mb="lg">
-                <Group>
-                    <Title order={2}>{t('articles_for', { name: publication.name })}</Title>
-                    {isVerified && (
-                        <Tooltip label={t('verified_site_tooltip') || "Verified Site"}>
-                            <Badge color="green" leftSection={<IconCheck size={12} />}>
-                                {t('verified') || "Verified"}
-                            </Badge>
-                        </Tooltip>
-                    )}
-                </Group>
-                <Button component={Link} href={`/sites/${rkey}/articles/new`}>{t('add_article')}</Button>
-            </Group>
-
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-                {documents.map((doc) => {
-                    const verifyResult = docVerifyResults[doc.uri];
-                    return (
-                        <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
-                            <ActionIcon
-                                variant="subtle"
-                                color="red"
-                                onClick={() => handleDeleteDocument(doc.uri)}
-                                style={{
-                                    position: 'absolute',
-                                    top: 10,
-                                    right: 10,
-                                    zIndex: 1,
-                                }}
-                                title={t('delete_article')}
-                            >
-                                <IconTrash size={18} />
-                            </ActionIcon>
-                            <Text fw={500} pr={30}>{doc.value.title}</Text>
-                            <Text size="sm" c="dimmed" lineClamp={3}>
-                                {doc.value.description}
-                            </Text>
-                            <Text size="xs" mt="xs" c="dimmed">
-                                {doc.value.path}
-                            </Text>
-                            {verifyResult && (
-                                <Badge
-                                    mt="xs"
-                                    color={verifyResult.success ? (verifyResult.fullyVerified ? 'green' : 'yellow') : 'red'}
-                                    variant="light"
-                                    leftSection={verifyResult.success ? <IconCheck size={12} /> : <IconX size={12} />}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => {
-                                        setModalResult(verifyResult);
-                                        setModalTitle(doc.value.title || doc.value.path || '');
-                                        openModal();
-                                    }}
-                                >
-                                    {verifyResult.success
-                                        ? (verifyResult.fullyVerified ? t('verified') : t('verify_partial'))
-                                        : t('verify_error')
-                                    }
+                <Group justify="space-between" mb="lg">
+                    <Group>
+                        <Title order={2}>{t('articles_for', { name: publication.name })}</Title>
+                        {isVerified && (
+                            <Tooltip label={t('verified_site_tooltip') || "Verified Site"}>
+                                <Badge color="green" leftSection={<IconCheck size={12} />}>
+                                    {t('verified') || "Verified"}
                                 </Badge>
-                            )}
-                            <Group mt="md" grow>
-                                <Button variant="light" color="blue" radius="md" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
-                                    {t('edit')}
-                                </Button>
-                                <Button
-                                    variant="light"
-                                    color="teal"
-                                    radius="md"
-                                    loading={verifyingDocUri === doc.uri}
-                                    onClick={() => handleVerifyDocument(doc)}
-                                >
-                                    {t('verify_button')}
-                                </Button>
-                            </Group>
-                        </Card>
-                    );
-                })}
-            </SimpleGrid>
-
-            {/* Verification Result Modal */}
-            <Modal
-                opened={modalOpened}
-                onClose={closeModal}
-                title={
-                    <Group gap="xs">
-                        <Text fw={600}>{t('verify_modal_title')}</Text>
-                        {modalResult && (
-                            <Badge
-                                size="sm"
-                                color={modalResult.fullyVerified ? 'green' : modalResult.success ? 'yellow' : 'red'}
-                            >
-                                {modalResult.fullyVerified ? t('verified') : modalResult.success ? t('verify_partial') : t('verify_error')}
-                            </Badge>
+                            </Tooltip>
                         )}
                     </Group>
-                }
-                size="lg"
-            >
-                {modalTitle && (
-                    <Text size="sm" c="dimmed" mb="md">{modalTitle}</Text>
-                )}
-                <Stack gap="xs">
-                    {modalResult?.steps?.map((step, index) => (
-                        <Box key={index}>
-                            <Group gap="xs" wrap="nowrap">
-                                {getStepIcon(step.status)}
-                                <Text size="sm" fw={500}>{translateStepName(step.key)}</Text>
-                            </Group>
-                            <Text size="xs" c="dimmed" ml={28} style={{ wordBreak: 'break-all' }}>
-                                {translateStepMessage(step.key, step.status, step.params)}
-                            </Text>
-                        </Box>
-                    ))}
-                </Stack>
-            </Modal>
-        </Container>
+                    <Button component={Link} href={`/sites/${rkey}/articles/new`}>{t('add_article')}</Button>
+                </Group>
+
+                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+                    {documents.map((doc) => {
+                        const verifyResult = docVerifyResults[doc.uri];
+                        return (
+                            <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
+                                <ActionIcon
+                                    variant="subtle"
+                                    color="red"
+                                    onClick={() => handleDeleteDocument(doc.uri)}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 10,
+                                        right: 10,
+                                        zIndex: 1,
+                                    }}
+                                    title={t('delete_article')}
+                                >
+                                    <IconTrash size={18} />
+                                </ActionIcon>
+                                <Text fw={500} pr={30}>{doc.value.title}</Text>
+                                <Text size="sm" c="dimmed" lineClamp={3}>
+                                    {doc.value.description}
+                                </Text>
+                                <Text size="xs" mt="xs" c="dimmed">
+                                    {doc.value.path}
+                                </Text>
+                                {verifyResult && (
+                                    <Badge
+                                        mt="xs"
+                                        color={verifyResult.success ? (verifyResult.fullyVerified ? 'green' : 'yellow') : 'red'}
+                                        variant="light"
+                                        leftSection={verifyResult.success ? <IconCheck size={12} /> : <IconX size={12} />}
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => {
+                                            setModalResult(verifyResult);
+                                            setModalTitle(doc.value.title || doc.value.path || '');
+                                            openModal();
+                                        }}
+                                    >
+                                        {verifyResult.success
+                                            ? (verifyResult.fullyVerified ? t('verified') : t('verify_partial'))
+                                            : t('verify_error')
+                                        }
+                                    </Badge>
+                                )}
+                                <Group mt="md" grow>
+                                    <Button variant="light" color="blue" radius="md" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
+                                        {t('edit')}
+                                    </Button>
+                                    <Button
+                                        variant="light"
+                                        color="teal"
+                                        radius="md"
+                                        loading={verifyingDocUri === doc.uri}
+                                        onClick={() => handleVerifyDocument(doc)}
+                                    >
+                                        {t('verify_button')}
+                                    </Button>
+                                </Group>
+                            </Card>
+                        );
+                    })}
+                </SimpleGrid>
+
+                {/* Verification Result Modal */}
+                <Modal
+                    opened={modalOpened}
+                    onClose={closeModal}
+                    title={
+                        <Group gap="xs">
+                            <Text fw={600}>{t('verify_modal_title')}</Text>
+                            {modalResult && (
+                                <Badge
+                                    size="sm"
+                                    color={modalResult.fullyVerified ? 'green' : modalResult.success ? 'yellow' : 'red'}
+                                >
+                                    {modalResult.fullyVerified ? t('verified') : modalResult.success ? t('verify_partial') : t('verify_error')}
+                                </Badge>
+                            )}
+                        </Group>
+                    }
+                    size="lg"
+                >
+                    {modalTitle && (
+                        <Text size="sm" c="dimmed" mb="md">{modalTitle}</Text>
+                    )}
+                    <Stack gap="xs">
+                        {modalResult?.steps?.map((step, index) => (
+                            <Box key={index}>
+                                <Group gap="xs" wrap="nowrap">
+                                    {getStepIcon(step.status)}
+                                    <Text size="sm" fw={500}>{translateStepName(step.key)}</Text>
+                                </Group>
+                                <Text size="xs" c="dimmed" ml={28} style={{ wordBreak: 'break-all' }}>
+                                    {translateStepMessage(step.key, step.status, step.params)}
+                                </Text>
+                            </Box>
+                        ))}
+                    </Stack>
+                </Modal>
+            </Container>
+        </AuthGuard>
     );
 }

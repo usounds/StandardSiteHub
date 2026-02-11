@@ -12,6 +12,7 @@ import { IconCheck, IconX } from '@tabler/icons-react';
 import type { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
 import type { Main as SiteStandardDocument } from '@/lib/lexicons/types/site/standard/document';
 import { ArticleForm, FormValues } from '@/components/sites/ArticleForm';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function EditArticlePage() {
     const t = useTranslations('EditArticle');
@@ -167,15 +168,17 @@ export default function EditArticlePage() {
     }
 
     return (
-        <Container size="sm" py="xl">
-            <ArticleForm
-                initialValues={initialValues}
-                onSubmit={handleSubmit}
-                isSubmitting={submitting}
-                submitLabel={t('update')}
-                mode="edit"
-                titleLabel={t('title')}
-            />
-        </Container>
+        <AuthGuard>
+            <Container size="sm" py="xl">
+                <ArticleForm
+                    initialValues={initialValues}
+                    onSubmit={handleSubmit}
+                    isSubmitting={submitting}
+                    submitLabel={t('update')}
+                    mode="edit"
+                    titleLabel={t('title')}
+                />
+            </Container>
+        </AuthGuard>
     );
 }

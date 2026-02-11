@@ -7,6 +7,7 @@ import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { SiteForm, SiteFormValues } from '@/components/sites/SiteForm';
 import { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function NewSitePage() {
     const t = useTranslations('NewSite');
@@ -63,21 +64,23 @@ export default function NewSitePage() {
     };
 
     return (
-        <Container size="sm" py="xl">
-            <Title mb="lg">{t('title')}</Title>
-            <SiteForm
-                initialValues={{
-                    url: '',
-                    rkey: '',
-                    name: '',
-                    description: '',
-                    icon: null,
-                    showInDiscover: true,
-                }}
-                onSubmit={handleSubmit}
-                isSubmitting={submitting}
-                mode="create"
-            />
-        </Container>
+        <AuthGuard>
+            <Container size="sm" py="xl">
+                <Title mb="lg">{t('title')}</Title>
+                <SiteForm
+                    initialValues={{
+                        url: '',
+                        rkey: '',
+                        name: '',
+                        description: '',
+                        icon: null,
+                        showInDiscover: true,
+                    }}
+                    onSubmit={handleSubmit}
+                    isSubmitting={submitting}
+                    mode="create"
+                />
+            </Container>
+        </AuthGuard>
     );
 }

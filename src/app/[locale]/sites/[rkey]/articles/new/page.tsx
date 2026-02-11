@@ -11,8 +11,8 @@ import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons-react';
 
 import type { Main as SiteStandardDocument } from '@/lib/lexicons/types/site/standard/document';
-import type { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
 import { ArticleForm, FormValues } from '@/components/sites/ArticleForm';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function NewArticlePage() {
     const t = useTranslations('NewArticle');
@@ -53,18 +53,15 @@ export default function NewArticlePage() {
                 throw new Error('Failed to fetch publication record');
             }
 
-            // TypeScript might still complain about data being null if inference is weak
             if (!pubRes.data) {
                 throw new Error('No data in response');
             }
 
-            // Validate that we got a publication record
             const record = pubRes.data.value;
             if (!record || typeof record !== 'object' || !('$type' in record) || record.$type !== 'site.standard.publication') {
                 throw new Error('Invalid publication record');
             }
 
-            // pubUri is available on the top level response data for getRecord
             const pubUri = pubRes.data.uri;
 
             const documentRecord: SiteStandardDocument = {
@@ -121,24 +118,26 @@ export default function NewArticlePage() {
     };
 
     return (
-        <Container size="sm" py="xl">
-            <ArticleForm
-                initialValues={{
-                    siteUrl: '',
-                    rkey: '',
-                    title: '',
-                    description: '',
-                    path: '',
-                    content: '',
-                    tags: [],
-                    coverImage: null,
-                }}
-                onSubmit={handleSubmit}
-                isSubmitting={submitting}
-                submitLabel={t('create')}
-                mode="create"
-                titleLabel={t('title')}
-            />
-        </Container>
+        <AuthGuard>
+            <Container size="sm" py="xl">
+                <ArticleForm
+                    initialValues={{
+                        siteUrl: '',
+                        rkey: '',
+                        title: '',
+                        description: '',
+                        path: '',
+                        content: '',
+                        tags: [],
+                        coverImage: null,
+                    }}
+                    onSubmit={handleSubmit}
+                    isSubmitting={submitting}
+                    submitLabel={t('create')}
+                    mode="create"
+                    titleLabel={t('title')}
+                />
+            </Container>
+        </AuthGuard>
     );
 }

@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
 import { SiteForm, SiteFormValues } from '@/components/sites/SiteForm';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function EditSitePage() {
     const t = useTranslations('EditSite');
@@ -113,24 +114,22 @@ export default function EditSitePage() {
         return <Center h="50vh"><Loader /><Text ml="sm">{t('loading')}</Text></Center>;
     }
 
-    if (!session) {
-        return <Container><Text>{t('please_login')}</Text></Container>;
-    }
-
     if (!initialValues) {
         return <Container><Text>Not Found</Text></Container>;
     }
 
     return (
-        <Container size="sm" py="xl">
-            <Title mb="lg">{t('title')}</Title>
-            <SiteForm
-                initialValues={initialValues}
-                onSubmit={handleSubmit}
-                isSubmitting={submitting}
-                mode="edit"
-                existingIcon={existingIcon}
-            />
-        </Container>
+        <AuthGuard>
+            <Container size="sm" py="xl">
+                <Title mb="lg">{t('title')}</Title>
+                <SiteForm
+                    initialValues={initialValues}
+                    onSubmit={handleSubmit}
+                    isSubmitting={submitting}
+                    mode="edit"
+                    existingIcon={existingIcon}
+                />
+            </Container>
+        </AuthGuard>
     );
 }

@@ -32,26 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isConfigured, setIsConfigured] = useState(false);
 
     useEffect(() => {
-        const fetchHandle = async () => {
-            if (session) {
-                try {
-                    const response = await fetch(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${session.info.sub}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        setHandle(data.handle);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch handle', err);
-                }
-            } else {
-                setHandle(undefined);
-            }
-        };
-
-        fetchHandle();
-    }, [session]);
-
-    useEffect(() => {
         if (typeof window === 'undefined') return;
 
         const origin = window.location.origin;
@@ -63,6 +43,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             identityResolver: identityResolver,
         });
         setIsConfigured(true);
+    }, []);
+
+    const fetchHandle = useCallback(async (did: string) => {
+        try {
+            const response = await fetch(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${did}`);
+            if (response.ok) {
+                const data = await response.json();
+                setHandle(data.handle);
+            }
+        } catch (err) {
+            console.error('Failed to fetch handle', err);
+        }
     }, []);
 
     const restoreSession = useCallback(async () => {
@@ -82,13 +74,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     handler: new OAuthUserAgent(sess),
                 });
                 setAgent(newAgent);
+
+                // Fetch handle before finishing loading
+                await fetchHandle(sess.info.sub);
             }
         } catch (err) {
             console.error('Failed to restore session', err);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [fetchHandle]);
 
     useEffect(() => {
         if (isConfigured) {

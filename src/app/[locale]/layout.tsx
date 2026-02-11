@@ -8,6 +8,11 @@ import { AuthProvider } from '@/lib/auth-context';
 import { Shell } from '@/components/Shell';
 
 import { getTranslations } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
 export async function generateMetadata({
   params

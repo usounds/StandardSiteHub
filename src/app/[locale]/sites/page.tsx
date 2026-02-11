@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
-import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, Anchor, Alert, Image, ActionIcon, Modal, Code, Stack } from '@mantine/core';
+import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, Image, ActionIcon, Modal, Code, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/lib/auth-context';
@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { verifyPublicationOwnership, PublicationVerificationResult } from '@/app/actions/verify-publication';
 import { IconTrash } from '@tabler/icons-react';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 // Define the record structure returned by listRecords
 interface PublicationRecord {
@@ -35,7 +36,6 @@ export default function PublicationsPage() {
     const [verifying, setVerifying] = useState<Record<string, boolean>>({});
     const [selectedPub, setSelectedPub] = useState<PublicationRecord | null>(null);
     const [opened, { open, close }] = useDisclosure(false);
-    const router = useRouter();
 
     const fetchPublications = useCallback(async () => {
         if (!session || !agent) {
@@ -133,10 +133,6 @@ export default function PublicationsPage() {
         return <Center h="50vh"><Loader /><Text ml="md">{t('loading')}</Text></Center>;
     }
 
-    if (!session) {
-        return <Container><Text>{t('please_login')}</Text></Container>;
-    }
-
     let wellKnownUrl = '';
     if (selectedPub?.value.url) {
         try {
@@ -151,129 +147,131 @@ export default function PublicationsPage() {
     }
 
     return (
-        <Container size="lg" py="xl">
-            <Group justify="space-between" mb="lg">
-                <Title>{t('title')}</Title>
-                <Button component={Link} href="/sites/new">{t('create_new')}</Button>
-            </Group>
+        <AuthGuard>
+            <Container size="lg" py="xl">
+                <Group justify="space-between" mb="lg">
+                    <Title>{t('title')}</Title>
+                    <Button component={Link} href="/sites/new">{t('create_new')}</Button>
+                </Group>
 
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-                {publications.map((pub) => {
-                    const verification = verificationStatus[pub.uri];
-                    const isVerifying = verifying[pub.uri];
+                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+                    {publications.map((pub) => {
+                        const verification = verificationStatus[pub.uri];
+                        const isVerifying = verifying[pub.uri];
 
-                    const iconRef = (pub.value.icon as any)?.ref?.$link;
-                    const did = pub.uri.split('/')[2]; // at://did:plc:xxx/collection/rkey
+                        const iconRef = (pub.value.icon as any)?.ref?.$link;
+                        const did = pub.uri.split('/')[2]; // at://did:plc:xxx/collection/rkey
 
-                    return (
-                        <Card key={pub.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
-                            <Card.Section>
-                                {iconRef && did ? (
-                                    <Image
-                                        src={getBlobUrl(did, iconRef)}
-                                        h={160}
-                                        alt={pub.value.name}
-                                        fallbackSrc=""
-                                    />
-                                ) : (
-                                    <Center h={160} bg="gray.1">
-                                        <Text c="dimmed">{t('icon')}</Text>
-                                    </Center>
-                                )}
-                                <ActionIcon
-                                    variant="subtle"
-                                    color="red"
-                                    onClick={() => handleDeleteSite(pub.uri)}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 10,
-                                        right: 10,
-                                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                    }}
-                                    title={t('delete')}
-                                >
-                                    <IconTrash size={18} />
-                                </ActionIcon>
-                            </Card.Section>
+                        return (
+                            <Card key={pub.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
+                                <Card.Section>
+                                    {iconRef && did ? (
+                                        <Image
+                                            src={getBlobUrl(did, iconRef)}
+                                            h={160}
+                                            alt={pub.value.name}
+                                            fallbackSrc=""
+                                        />
+                                    ) : (
+                                        <Center h={160} bg="gray.1">
+                                            <Text c="dimmed">{t('icon')}</Text>
+                                        </Center>
+                                    )}
+                                    <ActionIcon
+                                        variant="subtle"
+                                        color="red"
+                                        onClick={() => handleDeleteSite(pub.uri)}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 10,
+                                            right: 10,
+                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                        }}
+                                        title={t('delete')}
+                                    >
+                                        <IconTrash size={18} />
+                                    </ActionIcon>
+                                </Card.Section>
 
-                            <Group justify="space-between" mt="md" mb="xs">
-                                <Text fw={500}>{pub.value.name}</Text>
-                                {isVerifying ? (
-                                    <Loader size="xs" />
-                                ) : verification?.verified ? (
-                                    <Tooltip label={t('verified_tooltip')}>
-                                        <Badge color="green" variant="filled" leftSection="✓">
-                                            {t('verified')}
-                                        </Badge>
-                                    </Tooltip>
-                                ) : verification && !verification.verified ? (
-                                    <Tooltip label={t('unverified_tooltip')}>
-                                        <Badge color="orange" variant="light">
-                                            {t('unverified')}
-                                        </Badge>
-                                    </Tooltip>
-                                ) : null}
-                            </Group>
+                                <Group justify="space-between" mt="md" mb="xs">
+                                    <Text fw={500}>{pub.value.name}</Text>
+                                    {isVerifying ? (
+                                        <Loader size="xs" />
+                                    ) : verification?.verified ? (
+                                        <Tooltip label={t('verified_tooltip')}>
+                                            <Badge color="green" variant="filled" leftSection="✓">
+                                                {t('verified')}
+                                            </Badge>
+                                        </Tooltip>
+                                    ) : verification && !verification.verified ? (
+                                        <Tooltip label={t('unverified_tooltip')}>
+                                            <Badge color="orange" variant="light">
+                                                {t('unverified')}
+                                            </Badge>
+                                        </Tooltip>
+                                    ) : null}
+                                </Group>
 
-                            <Text size="sm" c="dimmed" lineClamp={3} h={60}>
-                                {pub.value.description}
+                                <Text size="sm" c="dimmed" lineClamp={3} h={60}>
+                                    {pub.value.description}
+                                </Text>
+
+                                <Group grow mt="md">
+                                    <Button variant="light" radius="md" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
+                                        {t('edit')}
+                                    </Button>
+                                    {verification?.verified ? (
+                                        <Button color="blue" radius="md" component={Link} href={`/sites/${pub.uri.split('/').pop()}`}>
+                                            {t('manage_documents')}
+                                        </Button>
+                                    ) : (
+                                        <Button color="orange" radius="md" onClick={() => handleOpenVerification(pub)}>
+                                            {t('verify_site')}
+                                        </Button>
+                                    )}
+                                </Group>
+                            </Card>
+                        );
+                    })}
+                </SimpleGrid>
+
+                <Modal opened={opened} onClose={close} title={t('verification_modal_title')} size="lg">
+                    {selectedPub && (
+                        <Stack gap="md">
+                            <Text size="sm">
+                                {t('verification_step_text')}
+                            </Text>
+                            <Text size="sm">
+                                {t('verification_confirmation_text')}
                             </Text>
 
-                            <Group grow mt="md">
-                                <Button variant="light" radius="md" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
-                                    {t('edit')}
+                            <Stack gap="xs">
+                                <Text size="xs" fw={700}>{t('verification_request')}</Text>
+                                <Code block p="xs">
+                                    GET {wellKnownUrl}
+                                </Code>
+                            </Stack>
+
+                            <Stack gap="xs">
+                                <Text size="xs" fw={700}>{t('verification_response')}</Text>
+                                <Code block p="xs">
+                                    {selectedPub.uri}
+                                </Code>
+                            </Stack>
+
+                            <Group justify="flex-end" mt="md">
+                                <Button
+                                    variant="light"
+                                    color="orange"
+                                    onClick={() => handleDownloadVerificationFile(selectedPub.uri)}
+                                >
+                                    {t('download_verification_file')}
                                 </Button>
-                                {verification?.verified ? (
-                                    <Button color="blue" radius="md" component={Link} href={`/sites/${pub.uri.split('/').pop()}`}>
-                                        {t('manage_documents')}
-                                    </Button>
-                                ) : (
-                                    <Button color="orange" radius="md" onClick={() => handleOpenVerification(pub)}>
-                                        {t('verify_site')}
-                                    </Button>
-                                )}
                             </Group>
-                        </Card>
-                    );
-                })}
-            </SimpleGrid>
-
-            <Modal opened={opened} onClose={close} title={t('verification_modal_title')} size="lg">
-                {selectedPub && (
-                    <Stack gap="md">
-                        <Text size="sm">
-                            {t('verification_step_text')}
-                        </Text>
-                        <Text size="sm">
-                            {t('verification_confirmation_text')}
-                        </Text>
-
-                        <Stack gap="xs">
-                            <Text size="xs" fw={700}>{t('verification_request')}</Text>
-                            <Code block p="xs">
-                                GET {wellKnownUrl}
-                            </Code>
                         </Stack>
-
-                        <Stack gap="xs">
-                            <Text size="xs" fw={700}>{t('verification_response')}</Text>
-                            <Code block p="xs">
-                                {selectedPub.uri}
-                            </Code>
-                        </Stack>
-
-                        <Group justify="flex-end" mt="md">
-                            <Button
-                                variant="light"
-                                color="orange"
-                                onClick={() => handleDownloadVerificationFile(selectedPub.uri)}
-                            >
-                                {t('download_verification_file')}
-                            </Button>
-                        </Group>
-                    </Stack>
-                )}
-            </Modal>
-        </Container>
+                    )}
+                </Modal>
+            </Container>
+        </AuthGuard>
     );
 }

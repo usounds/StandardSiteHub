@@ -1,8 +1,15 @@
 import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Button, Group, Image, Box } from '@mantine/core';
 import { IconExternalLink } from '@tabler/icons-react';
 import { getTranslations } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
 
 export const revalidate = 60;
+export const dynamic = 'force-static';
+
+
+export function generateStaticParams() {
+    return routing.locales.map((locale) => ({ locale }));
+}
 
 interface PublicationApiRecord {
     did: string;
@@ -49,8 +56,9 @@ async function verifyPublication(siteUrl: string, atUri: string): Promise<boolea
     }
 }
 
-export default async function PublicListPage() {
-    const t = await getTranslations('PublicList');
+export default async function PublicListPage({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: 'PublicList' });
 
     let records: PublicationApiRecord[] = [];
     try {
