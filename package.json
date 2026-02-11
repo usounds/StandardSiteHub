@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev -p 4200",
     "lint": "eslint",
-    "start": "next start"
+    "start": "next start",
+    "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
     "@atcute/atproto": "^3.1.10",
