@@ -165,6 +165,9 @@
     "step_validate_wellknown_failure": ".well-known content mismatch",
     "delete_article": "Delete Article",
     "delete_article_confirm_message": "Are you sure you want to delete this article? This action cannot be undone.",
+    "delete_success": "Delete Successful",
+    "delete_error": "Delete Failed",
+    "delete_error_message": "An error occurred while deleting the article.",
     "verified": "Verified",
     "verified_site_tooltip": "This site's domain ownership has been verified via AT-URI"
   },

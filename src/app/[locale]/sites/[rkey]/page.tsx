@@ -153,14 +153,14 @@ export default function PublicationDocumentsPage() {
             setDocuments(prev => prev.filter(p => p.uri !== uri));
             notifications.show({
                 title: t('delete_article'),
-                message: 'Success',
+                message: t('delete_success'),
                 color: 'green',
             });
         } catch (err) {
             console.error(err);
             notifications.show({
-                title: 'Error',
-                message: 'Failed to delete article',
+                title: t('delete_error'),
+                message: t('delete_error_message'),
                 color: 'red',
             });
         }

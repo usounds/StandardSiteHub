@@ -144,6 +144,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                     if (!pubPds) {
                                         addStep('resolve_pub_pds', 'failure');
                                     } else {
+                                        addStep('resolve_pub_pds', 'success', { pds: pubPds });
                                         const pubRecordRes = await fetch(`${pubPds}/xrpc/com.atproto.repo.getRecord?repo=${pubDid}&collection=${pubCollection}&rkey=${pubRkey}`, {
                                             signal: AbortSignal.timeout(5000)
                                         });
@@ -153,6 +154,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                         } else {
                                             const pubRecordData = await pubRecordRes.json();
                                             const publication = pubRecordData.value;
+                                            addStep('fetch_pub_record', 'success');
                                             const siteUrl = publication.url;
 
                                             if (!siteUrl) {

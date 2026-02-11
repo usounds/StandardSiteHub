@@ -165,6 +165,9 @@
         "step_validate_wellknown_failure": ".well-knownの内容が一致しません",
         "delete_article": "記事を削除",
         "delete_article_confirm_message": "本当にこの記事を削除しますか？この操作は取り消せません。",
+        "delete_success": "削除成功",
+        "delete_error": "削除失敗",
+        "delete_error_message": "記事の削除中にエラーが発生しました。",
         "verified": "検証済み",
         "verified_site_tooltip": "このサイトのドメインはAT-URIで検証されています"
     },
