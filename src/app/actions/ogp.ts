@@ -148,3 +148,49 @@ export async function fetchIconAsBase64(iconUrl: string): Promise<IconData | nul
     }
 }
 
+/**
+ * Fetch an image from a URL and return it as base64 data.
+ * If the image exceeds maxSizeBytes, it is resized progressively.
+ * Uses canvas-free approach: simply returns the fetched data, and
+ * the client will handle resizing via browser canvas.
+ */
+export interface FetchedImageData {
+    base64: string;
+    mimeType: string;
+    sizeBytes: number;
+    needsResize: boolean;
+}
+
+export async function fetchImageAsBase64(imageUrl: string, maxSizeBytes: number = 900_000): Promise<FetchedImageData | null> {
+    const normalizedUrl = normalizeUrl(imageUrl);
+    if (!normalizedUrl) return null;
+
+    try {
+        const response = await fetch(normalizedUrl, {
+            headers: {
+                'User-Agent': 'StandardSiteIntegration/1.0 (bot)',
+            },
+            signal: AbortSignal.timeout(15000),
+        });
+
+        if (!response.ok) return null;
+
+        const contentType = response.headers.get('content-type') || 'image/png';
+        const buffer = await response.arrayBuffer();
+        const actualMimeType = detectImageMimeType(buffer, contentType.split(';')[0].trim());
+        const base64 = Buffer.from(buffer).toString('base64');
+
+        return {
+            base64,
+            mimeType: actualMimeType,
+            sizeBytes: buffer.byteLength,
+            needsResize: buffer.byteLength > maxSizeBytes,
+        };
+    } catch (error) {
+        if (error instanceof TypeError && error.message.includes('URL')) {
+            return null;
+        }
+        console.error('Image Fetch Error:', error);
+        return null;
+    }
+}

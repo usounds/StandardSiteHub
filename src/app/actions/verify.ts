@@ -2,6 +2,12 @@
 
 import * as cheerio from 'cheerio';
 
+export interface VerificationStep {
+    key: string;
+    status: 'success' | 'failure' | 'pending';
+    params?: Record<string, string>;
+}
+
 export interface VerificationResult {
     success: boolean;
     fullyVerified?: boolean;
@@ -11,17 +17,13 @@ export interface VerificationResult {
     title?: string;
     description?: string;
     image?: string;
-    steps?: {
-        name: string;
-        status: 'success' | 'failure' | 'pending';
-        message?: string;
-    }[];
+    steps?: VerificationStep[];
 }
 
 export async function verifyDocument(targetUrl: string): Promise<VerificationResult> {
-    const steps: NonNullable<VerificationResult['steps']> = [];
-    const addStep = (name: string, status: 'success' | 'failure' | 'pending', message?: string) => {
-        steps.push({ name, status, message });
+    const steps: VerificationStep[] = [];
+    const addStep = (key: string, status: 'success' | 'failure' | 'pending', params?: Record<string, string>) => {
+        steps.push({ key, status, params });
     };
 
     let title: string | undefined;
@@ -41,10 +43,10 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
         });
 
         if (!response.ok) {
-            addStep('Fetch document page', 'failure', `Failed to fetch page: ${response.status} ${response.statusText}`);
+            addStep('fetch_page', 'failure', { detail: `${response.status} ${response.statusText}` });
             return { success: false, steps };
         }
-        addStep('Fetch document page', 'success', 'Successfully fetched the document page');
+        addStep('fetch_page', 'success');
 
         const html = await response.text();
         const $ = cheerio.load(html);
@@ -61,29 +63,29 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
             } catch { }
         }
 
-        addStep('Extract basic metadata', 'success', 'Extracted title and description from page');
+        addStep('extract_metadata', 'success');
 
         try {
             // 2. Extract and Parse AT-URI
             const link = $('link[rel="site.standard.document"]').attr('href');
             if (!link || !link.startsWith('at://')) {
-                addStep('Extract document AT URI', 'failure', 'Missing or invalid AT-URI link tag');
+                addStep('extract_aturi', 'failure');
             } else {
-                addStep('Extract document AT URI', 'success', `Found document AT URI: ${link}`);
+                addStep('extract_aturi', 'success', { uri: link });
 
                 const atUriParts = link.replace('at://', '').split('/');
                 if (atUriParts.length < 3) {
-                    addStep('Parse document AT URI', 'failure', 'AT-URI is malformed');
+                    addStep('parse_aturi', 'failure');
                 } else {
                     did = atUriParts[0];
                     collection = atUriParts[1];
                     rkey = atUriParts[2];
-                    addStep('Parse document AT URI', 'success', 'AT URI is well-formed');
+                    addStep('parse_aturi', 'success');
 
                     if (collection !== 'site.standard.document') {
-                        addStep('Verify document collection', 'failure', 'Not a site.standard.document');
+                        addStep('verify_collection', 'failure');
                     } else {
-                        addStep('Verify document collection', 'success', 'AT URI references site.standard.document collection');
+                        addStep('verify_collection', 'success');
 
                         // 3. Resolve PDS
                         let pds: string | undefined;
@@ -97,9 +99,9 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                         } catch (e) { }
 
                         if (!pds) {
-                            addStep('Resolve document PDS', 'failure', 'Could not resolve PDS endpoint');
+                            addStep('resolve_pds', 'failure');
                         } else {
-                            addStep('Resolve document PDS', 'success', `Resolved to PDS: ${pds}`);
+                            addStep('resolve_pds', 'success', { pds });
 
                             // 4. Fetch document record
                             const recordRes = await fetch(`${pds}/xrpc/com.atproto.repo.getRecord?repo=${did}&collection=${collection}&rkey=${rkey}`, {
@@ -107,18 +109,18 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                             });
 
                             if (!recordRes.ok) {
-                                addStep('Fetch document record', 'failure', `Record not found on PDS (${recordRes.status})`);
+                                addStep('fetch_record', 'failure', { status: String(recordRes.status) });
                             } else {
                                 const recordData = await recordRes.json();
                                 const document = recordData.value;
-                                addStep('Fetch document record', 'success', 'Successfully fetched document record');
+                                addStep('fetch_record', 'success');
 
                                 // 5. Extract Publication and Verify .well-known
                                 const pubUri = document.site;
                                 if (!pubUri || !pubUri.startsWith('at://')) {
-                                    addStep('Parse publication AT URI', 'failure', 'Document record missing publication site link');
+                                    addStep('parse_pub_aturi', 'failure');
                                 } else {
-                                    addStep('Parse publication AT URI', 'success', `Publication AT-URI: ${pubUri}`);
+                                    addStep('parse_pub_aturi', 'success', { uri: pubUri });
 
                                     // Extract domain from targetUrl for .well-known check
                                     const targetUrlObj = new URL(targetUrl);
@@ -127,20 +129,20 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                     try {
                                         const wkRes = await fetch(wellKnownUrl, { signal: AbortSignal.timeout(5000) });
                                         if (!wkRes.ok) {
-                                            addStep('Fetch .well-known', 'failure', `Failed to fetch ${wellKnownUrl}`);
+                                            addStep('fetch_wellknown', 'failure');
                                         } else {
                                             const wkContent = (await wkRes.text()).trim();
-                                            addStep('Fetch .well-known', 'success', `Successfully fetched .well-known`);
+                                            addStep('fetch_wellknown', 'success');
 
                                             if (wkContent !== pubUri) {
-                                                addStep('Validate .well-known content', 'failure', `.well-known content mismatch: expected ${pubUri}`);
+                                                addStep('validate_wellknown', 'failure');
                                             } else {
-                                                addStep('Validate .well-known content', 'success', 'Publication AT URI matches .well-known endpoint');
+                                                addStep('validate_wellknown', 'success');
                                                 fullyVerified = true;
                                             }
                                         }
                                     } catch (e) {
-                                        addStep('Fetch .well-known', 'failure', 'Network error while fetching .well-known');
+                                        addStep('fetch_wellknown', 'failure');
                                     }
                                 }
                             }
@@ -149,7 +151,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                 }
             }
         } catch (protocolErr: any) {
-            addStep('Protocol Verification Status', 'failure', protocolErr.message || 'Error durante el proceso de verificación del protocolo');
+            addStep('fetch_page', 'failure', { detail: protocolErr.message || 'Unknown protocol error' });
         }
 
         return {
@@ -164,7 +166,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
             steps
         };
     } catch (err: any) {
-        addStep('Verification Error', 'failure', err.message || 'Unknown error');
+        addStep('fetch_page', 'failure', { detail: err.message || 'Unknown error' });
         return { success: false, steps };
     }
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from 'react';
-import { Title, TextInput, Textarea, Button, Stack, Group, TagsInput, FileInput, Text, Collapse } from '@mantine/core';
+import { Title, TextInput, Textarea, Button, Stack, Group, TagsInput, FileInput, Text, Collapse, Image as MantineImage } from '@mantine/core';
 import { createDocumentFormSchema } from '@/lib/validation/document';
 import { useForm } from '@mantine/form';
 import { verifyDocument } from '@/app/actions/verify';
+import { fetchImageAsBase64 } from '@/app/actions/ogp';
 import { useTranslations } from 'next-intl';
 import * as TID from '@atcute/tid';
 import { notifications } from '@mantine/notifications';
@@ -31,12 +32,80 @@ interface ArticleFormProps {
     titleLabel?: string;
 }
 
+/**
+ * Resize an image using browser canvas to fit within maxSizeBytes.
+ * Converts to JPEG with progressively lower quality.
+ */
+async function resizeImageToFit(base64: string, mimeType: string, maxSizeBytes: number): Promise<File> {
+    return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Scale down if needed (try multiple quality levels first, then scale)
+            const tryEncode = (scale: number, quality: number): Blob | null => {
+                canvas.width = Math.round(width * scale);
+                canvas.height = Math.round(height * scale);
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return null;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                // Use toBlob synchronously via toDataURL
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                const binaryStr = atob(dataUrl.split(',')[1]);
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }
+                return new Blob([bytes], { type: 'image/jpeg' });
+            };
+
+            // Try different quality/scale combinations
+            const attempts: [number, number][] = [
+                [1.0, 0.85], [1.0, 0.7], [1.0, 0.5],
+                [0.75, 0.85], [0.75, 0.7], [0.75, 0.5],
+                [0.5, 0.85], [0.5, 0.7], [0.5, 0.5],
+            ];
+
+            for (const [scale, quality] of attempts) {
+                const blob = tryEncode(scale, quality);
+                if (blob && blob.size <= maxSizeBytes) {
+                    resolve(new File([blob], 'cover.jpg', { type: 'image/jpeg' }));
+                    return;
+                }
+            }
+
+            // Last resort: smallest attempt
+            const lastBlob = tryEncode(0.5, 0.3);
+            if (lastBlob) {
+                resolve(new File([lastBlob], 'cover.jpg', { type: 'image/jpeg' }));
+            } else {
+                reject(new Error('Failed to resize image'));
+            }
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = `data:${mimeType};base64,${base64}`;
+    });
+}
+
 export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode, titleLabel }: ArticleFormProps) {
     const t = useTranslations(mode === 'create' ? 'NewArticle' : 'EditArticle');
     const tVal = useTranslations('Validation');
+    const tStep = useTranslations('SiteDetail');
+
+    const translateStepName = (key: string) => {
+        const tKey = `step_${key}` as any;
+        try { return tStep(tKey); } catch { return key; }
+    };
+    const translateStepMessage = (key: string, status: string, params?: Record<string, string>) => {
+        const tKey = `step_${key}_${status}` as any;
+        try { return tStep(tKey, params); } catch { return params ? Object.values(params).join(', ') : ''; }
+    };
     const [verifying, setVerifying] = useState(false);
     const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
     const [showSteps, setShowSteps] = useState(false);
+    const [ogpImagePreview, setOgpImagePreview] = useState<string | null>(null);
 
     // Simple Zod resolver for Mantine
     const validate = (values: FormValues) => {
@@ -84,6 +153,35 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
                     const url = new URL(form.values.siteUrl);
                     form.setFieldValue('path', url.pathname);
                 } catch { }
+
+                // Fetch OGP image for cover image
+                if (res.image) {
+                    try {
+                        const imageData = await fetchImageAsBase64(res.image);
+                        if (imageData) {
+                            setOgpImagePreview(`data:${imageData.mimeType};base64,${imageData.base64}`);
+
+                            if (imageData.needsResize) {
+                                // Resize on client using canvas
+                                const resizedFile = await resizeImageToFit(imageData.base64, imageData.mimeType, 900_000);
+                                form.setFieldValue('coverImage', resizedFile);
+                            } else {
+                                // Use original directly
+                                const byteString = atob(imageData.base64);
+                                const ab = new ArrayBuffer(byteString.length);
+                                const ia = new Uint8Array(ab);
+                                for (let i = 0; i < byteString.length; i++) {
+                                    ia[i] = byteString.charCodeAt(i);
+                                }
+                                const blob = new Blob([ab], { type: imageData.mimeType });
+                                const file = new File([blob], `cover.${imageData.mimeType.split('/')[1] || 'jpg'}`, { type: imageData.mimeType });
+                                form.setFieldValue('coverImage', file);
+                            }
+                        }
+                    } catch (imgErr) {
+                        console.error('Failed to fetch OGP image:', imgErr);
+                    }
+                }
 
                 notifications.show({
                     title: t('verify_success'),
@@ -157,8 +255,8 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
                                                 <IconLoader2 size={16} className="animate-spin" />
                                             )}
                                             <Stack gap={0}>
-                                                <Text size="xs" fw={500}>{step.name}</Text>
-                                                {step.message && <Text size="xs" c="dimmed">{step.message}</Text>}
+                                                <Text size="xs" fw={500}>{translateStepName(step.key)}</Text>
+                                                <Text size="xs" c="dimmed">{translateStepMessage(step.key, step.status, step.params)}</Text>
                                             </Stack>
                                         </Group>
                                     ))}
@@ -205,6 +303,17 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
                         {...form.getInputProps('coverImage')}
                     />
 
+                    {ogpImagePreview && (
+                        <Group>
+                            <MantineImage src={ogpImagePreview} w={200} h={120} radius="sm" fit="cover" alt="OGP Cover" />
+                            <Stack gap={2}>
+                                <Text size="xs" c="dimmed">OGP Image</Text>
+                                {form.values.coverImage && (
+                                    <Text size="xs" c="green">{`${(form.values.coverImage.size / 1024).toFixed(0)} KB`}</Text>
+                                )}
+                            </Stack>
+                        </Group>
+                    )}
                     <Textarea
                         label={t('content')}
                         minRows={4}

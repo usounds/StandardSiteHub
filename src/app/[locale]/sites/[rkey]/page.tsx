@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Breadcrumbs, Anchor, ActionIcon, Badge, Tooltip } from '@mantine/core';
+import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Breadcrumbs, Anchor, ActionIcon, Badge, Tooltip, Modal, Stack, ThemeIcon, Box } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconTrash, IconCheck, IconExternalLink } from '@tabler/icons-react';
+import { IconTrash, IconCheck, IconX, IconCircleCheck, IconCircleX, IconClock } from '@tabler/icons-react';
 import { useAuth } from '@/lib/auth-context';
 import { Link, useRouter } from '@/i18n/routing';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
@@ -11,6 +12,7 @@ import { SiteStandardDocument } from '@/lib/lexicons/site-standard-document';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { verifySite } from '@/lib/verification';
+import { verifyDocument, VerificationResult } from '@/app/actions/verify';
 
 interface DocumentRecord {
     uri: string;
@@ -28,6 +30,13 @@ export default function PublicationDocumentsPage() {
     const [documents, setDocuments] = useState<DocumentRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [isVerified, setIsVerified] = useState(false);
+    const [verifyingDocUri, setVerifyingDocUri] = useState<string | null>(null);
+    const [docVerifyResults, setDocVerifyResults] = useState<Record<string, VerificationResult>>({});
+
+    // Modal state
+    const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+    const [modalResult, setModalResult] = useState<VerificationResult | null>(null);
+    const [modalTitle, setModalTitle] = useState('');
 
     useEffect(() => {
         if (isLoading) return;
@@ -38,10 +47,6 @@ export default function PublicationDocumentsPage() {
 
         async function fetchData() {
             try {
-                // 1. Fetch Publication
-                // Note: casting method name to string or any to bypass potential strict typing issues
-                // if agent is explicitly typed as strict. But we switched to Client<any, any>.
-                // However, arguments must match signature.
                 const pubRes = await agent!.get('com.atproto.repo.getRecord', {
                     params: {
                         repo: session!.info.sub,
@@ -53,14 +58,12 @@ export default function PublicationDocumentsPage() {
                 const pubUri = (pubRes.data as any).uri;
                 setPublication(pubData);
 
-                // Verify site if URL is present
                 if (pubData.url) {
                     verifySite(pubData.url, pubUri).then(verified => {
                         setIsVerified(verified);
                     });
                 }
 
-                // 2. Fetch All Documents and Filter
                 let cursor: string | undefined;
                 let allDocs: DocumentRecord[] = [];
 
@@ -91,6 +94,41 @@ export default function PublicationDocumentsPage() {
         }
         fetchData();
     }, [agent, session, isLoading, rkey]);
+
+    const handleVerifyDocument = async (doc: DocumentRecord) => {
+        const articleUrl = publication?.url && doc.value.path
+            ? `${publication.url.replace(/\/$/, '')}${doc.value.path}`
+            : null;
+
+        if (!articleUrl) {
+            notifications.show({
+                title: t('verify_error'),
+                message: t('verify_error_message'),
+                color: 'red',
+            });
+            return;
+        }
+
+        setVerifyingDocUri(doc.uri);
+        try {
+            const res = await verifyDocument(articleUrl);
+            setDocVerifyResults(prev => ({ ...prev, [doc.uri]: res }));
+
+            // Show result in modal
+            setModalResult(res);
+            setModalTitle(doc.value.title || doc.value.path || '');
+            openModal();
+        } catch (err) {
+            console.error('Verify document error:', err);
+            notifications.show({
+                title: t('verify_error'),
+                message: t('verify_error_message'),
+                color: 'red',
+            });
+        } finally {
+            setVerifyingDocUri(null);
+        }
+    };
 
     const handleDeleteDocument = async (uri: string) => {
         if (!window.confirm(t('delete_article_confirm_message'))) return;
@@ -124,6 +162,26 @@ export default function PublicationDocumentsPage() {
                 message: 'Failed to delete article',
                 color: 'red',
             });
+        }
+    };
+
+    const translateStepName = (key: string) => {
+        const tKey = `step_${key}` as any;
+        try { return t(tKey); } catch { return key; }
+    };
+    const translateStepMessage = (key: string, status: string, params?: Record<string, string>) => {
+        const tKey = `step_${key}_${status}` as any;
+        try { return t(tKey, params); } catch { return params ? Object.values(params).join(', ') : ''; }
+    };
+
+    const getStepIcon = (status: 'success' | 'failure' | 'pending') => {
+        switch (status) {
+            case 'success':
+                return <ThemeIcon color="green" size="sm" radius="xl"><IconCircleCheck size={14} /></ThemeIcon>;
+            case 'failure':
+                return <ThemeIcon color="red" size="sm" radius="xl"><IconCircleX size={14} /></ThemeIcon>;
+            case 'pending':
+                return <ThemeIcon color="gray" size="sm" radius="xl"><IconClock size={14} /></ThemeIcon>;
         }
     };
 
@@ -163,35 +221,105 @@ export default function PublicationDocumentsPage() {
             </Group>
 
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-                {documents.map((doc) => (
-                    <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
-                        <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            onClick={() => handleDeleteDocument(doc.uri)}
-                            style={{
-                                position: 'absolute',
-                                top: 10,
-                                right: 10,
-                                zIndex: 1,
-                            }}
-                            title={t('delete_article')}
-                        >
-                            <IconTrash size={18} />
-                        </ActionIcon>
-                        <Text fw={500} pr={30}>{doc.value.title}</Text>
-                        <Text size="sm" c="dimmed" lineClamp={3}>
-                            {doc.value.description}
-                        </Text>
-                        <Text size="xs" mt="xs" c="dimmed">
-                            {doc.value.path}
-                        </Text>
-                        <Button variant="light" color="blue" fullWidth mt="md" radius="md" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
-                            {t('edit')}
-                        </Button>
-                    </Card>
-                ))}
+                {documents.map((doc) => {
+                    const verifyResult = docVerifyResults[doc.uri];
+                    return (
+                        <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
+                            <ActionIcon
+                                variant="subtle"
+                                color="red"
+                                onClick={() => handleDeleteDocument(doc.uri)}
+                                style={{
+                                    position: 'absolute',
+                                    top: 10,
+                                    right: 10,
+                                    zIndex: 1,
+                                }}
+                                title={t('delete_article')}
+                            >
+                                <IconTrash size={18} />
+                            </ActionIcon>
+                            <Text fw={500} pr={30}>{doc.value.title}</Text>
+                            <Text size="sm" c="dimmed" lineClamp={3}>
+                                {doc.value.description}
+                            </Text>
+                            <Text size="xs" mt="xs" c="dimmed">
+                                {doc.value.path}
+                            </Text>
+                            {verifyResult && (
+                                <Badge
+                                    mt="xs"
+                                    color={verifyResult.success ? (verifyResult.fullyVerified ? 'green' : 'yellow') : 'red'}
+                                    variant="light"
+                                    leftSection={verifyResult.success ? <IconCheck size={12} /> : <IconX size={12} />}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => {
+                                        setModalResult(verifyResult);
+                                        setModalTitle(doc.value.title || doc.value.path || '');
+                                        openModal();
+                                    }}
+                                >
+                                    {verifyResult.success
+                                        ? (verifyResult.fullyVerified ? t('verified') : t('verify_partial'))
+                                        : t('verify_error')
+                                    }
+                                </Badge>
+                            )}
+                            <Group mt="md" grow>
+                                <Button variant="light" color="blue" radius="md" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
+                                    {t('edit')}
+                                </Button>
+                                <Button
+                                    variant="light"
+                                    color="teal"
+                                    radius="md"
+                                    loading={verifyingDocUri === doc.uri}
+                                    onClick={() => handleVerifyDocument(doc)}
+                                >
+                                    {t('verify_button')}
+                                </Button>
+                            </Group>
+                        </Card>
+                    );
+                })}
             </SimpleGrid>
+
+            {/* Verification Result Modal */}
+            <Modal
+                opened={modalOpened}
+                onClose={closeModal}
+                title={
+                    <Group gap="xs">
+                        <Text fw={600}>{t('verify_modal_title')}</Text>
+                        {modalResult && (
+                            <Badge
+                                size="sm"
+                                color={modalResult.fullyVerified ? 'green' : modalResult.success ? 'yellow' : 'red'}
+                            >
+                                {modalResult.fullyVerified ? t('verified') : modalResult.success ? t('verify_partial') : t('verify_error')}
+                            </Badge>
+                        )}
+                    </Group>
+                }
+                size="lg"
+            >
+                {modalTitle && (
+                    <Text size="sm" c="dimmed" mb="md">{modalTitle}</Text>
+                )}
+                <Stack gap="xs">
+                    {modalResult?.steps?.map((step, index) => (
+                        <Box key={index}>
+                            <Group gap="xs" wrap="nowrap">
+                                {getStepIcon(step.status)}
+                                <Text size="sm" fw={500}>{translateStepName(step.key)}</Text>
+                            </Group>
+                            <Text size="xs" c="dimmed" ml={28} style={{ wordBreak: 'break-all' }}>
+                                {translateStepMessage(step.key, step.status, step.params)}
+                            </Text>
+                        </Box>
+                    ))}
+                </Stack>
+            </Modal>
         </Container>
     );
 }
