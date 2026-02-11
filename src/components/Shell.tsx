@@ -48,6 +48,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
                             <Anchor component={Link} href="/sites" underline="hover" fw={500} size="sm" c="dimmed">
                                 {t('publications')}
                             </Anchor>
+                            <Anchor component={Link} href="/list" underline="hover" fw={500} size="sm" c="dimmed">
+                                {t('list')}
+                            </Anchor>
                         </Group>
 
                         <Group gap="xs">
@@ -121,6 +124,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <AppShell.Navbar p="md">
                 <Button component={Link} href="/" variant="subtle" fullWidth justify="flex-start" onClick={toggle}>{t('home')}</Button>
                 <Button component={Link} href="/sites" variant="subtle" fullWidth justify="flex-start" onClick={toggle}>{t('publications')}</Button>
+                <Button component={Link} href="/list" variant="subtle" fullWidth justify="flex-start" onClick={toggle}>{t('list')}</Button>
             </AppShell.Navbar>
 
             <AppShell.Main>

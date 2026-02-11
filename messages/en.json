@@ -35,6 +35,7 @@
     "app_title": "SSH",
     "home": "Home",
     "publications": "Sites",
+    "list": "List",
     "toggle_theme": "Toggle color scheme"
   },
   "Publications": {
@@ -209,5 +210,17 @@
   },
   "Footer": {
     "developed_by": "Developed by usounds.work"
+  },
+  "PublicList": {
+    "title": "Publication List",
+    "description": "All site.standard.publication records on AT Protocol.",
+    "no_sites": "No publications found.",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "verified_tooltip": "This site's domain ownership has been verified via AT-URI",
+    "unverified_tooltip": "This site's domain has not been verified yet",
+    "visit_site": "Visit Site",
+    "icon": "Icon",
+    "total_sites": "{count} sites total"
   }
 }

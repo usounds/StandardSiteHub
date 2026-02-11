@@ -35,6 +35,7 @@
         "app_title": "SSH",
         "home": "ホーム",
         "publications": "サイト",
+        "list": "リスト",
         "toggle_theme": "テーマ切り替え"
     },
     "Publications": {
@@ -209,5 +210,17 @@
     },
     "Footer": {
         "developed_by": "Developed by usounds.work"
+    },
+    "PublicList": {
+        "title": "パブリケーション一覧",
+        "description": "AT Protocol上の全てのsite.standard.publicationレコードを表示しています。",
+        "no_sites": "パブリケーションが見つかりません。",
+        "verified": "検証済み",
+        "unverified": "未検証",
+        "verified_tooltip": "このサイトのドメインはAT-URIで検証されています",
+        "unverified_tooltip": "このサイトのドメインはまだ検証されていません",
+        "visit_site": "サイトを訪問",
+        "icon": "アイコン",
+        "total_sites": "全 {count} サイト"
     }
 }
