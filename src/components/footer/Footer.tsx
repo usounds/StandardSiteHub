@@ -25,7 +25,7 @@ export function Footer() {
                     </Anchor>
 
                     <Anchor
-                        href="https://github.com/usounds/Rito"
+                        href="https://github.com/usounds/StandardSiteHub"
                         target="_blank"
                         rel="noopener noreferrer"
                         c="dimmed"
@@ -35,6 +35,6 @@ export function Footer() {
                     </Anchor>
                 </Group>
             </Container>
-        </footer>
+        </footer >
     );
 }
