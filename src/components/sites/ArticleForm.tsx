@@ -133,7 +133,7 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
 
                     {verificationResult?.success && !verificationResult?.fullyVerified && (
                         <Text size="xs" c="orange" fw={500}>
-                            {t('partially_verified_note') || 'ページ情報の取得に成功しましたが、SSHプロトコルの検証は未完了です。このまま作成できます。'}
+                            {t('partially_verified_note') || 'ページ情報の取得に成功しましたが、記事の検証は未完了です。このまま作成できます。'}
                         </Text>
                     )}
 

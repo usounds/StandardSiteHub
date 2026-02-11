@@ -137,7 +137,7 @@
         "create": "記事を作成",
         "verify_success": "検証成功",
         "verify_success_message": "サイトの情報を自動入力しました",
-        "partially_verified_note": "ページ情報の取得に成功しましたが、SSHプロトコルの検証は未完了です。このまま作成できます。",
+        "partially_verified_note": "ページ情報の取得に成功しましたが、記事の検証は未完了です。このまま作成できます。",
         "verify_error": "検証エラー",
         "verify_error_message": "サイト情報の取得に失敗しました",
         "create_success": "作成成功",
