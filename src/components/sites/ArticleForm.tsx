@@ -32,7 +32,7 @@ interface ArticleFormProps {
 }
 
 export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode, titleLabel }: ArticleFormProps) {
-    const t = useTranslations('NewArticle'); // Reuse NewArticle translations for common labels
+    const t = useTranslations(mode === 'create' ? 'NewArticle' : 'EditArticle');
     const tVal = useTranslations('Validation');
     const [verifying, setVerifying] = useState(false);
     const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);

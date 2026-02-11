@@ -9,17 +9,9 @@ import { useTranslations } from 'next-intl';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons-react';
 
-import type { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
-import type { SiteStandardDocument } from '@/lib/lexicons/site-standard-document';
+import type { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
+import type { Main as SiteStandardDocument } from '@/lib/lexicons/types/site/standard/document';
 import { ArticleForm, FormValues } from '@/components/sites/ArticleForm';
-
-// Define BlobRef locally to match the generated Lexicon types and API response
-interface BlobRef {
-    $type: 'blob';
-    ref: { $link: string };
-    mimeType: string;
-    size: number;
-}
 
 export default function EditArticlePage() {
     const t = useTranslations('EditArticle');
@@ -53,11 +45,10 @@ export default function EditArticlePage() {
                     }
                 });
 
-                if (!pubRes.ok) throw new Error('Failed to fetch publication');
-                if (!pubRes.data) throw new Error('No data in publication response');
+                if (!pubRes.ok || !pubRes.data) throw new Error('Failed to fetch publication');
 
-                const pubValue = (pubRes.data as any).value as SiteStandardPublication;
-                const pubUri = (pubRes.data as any).uri;
+                const pubValue = pubRes.data.value as SiteStandardPublication;
+                const pubUri = pubRes.data.uri;
                 setPublication({ uri: pubUri, value: pubValue });
 
                 // Fetch Document
@@ -69,11 +60,15 @@ export default function EditArticlePage() {
                     }
                 });
 
-                if (!docRes.ok) throw new Error('Failed to fetch document');
-                if (!docRes.data) throw new Error('No data in document response');
+                if (!docRes.ok || !docRes.data) throw new Error('Failed to fetch document');
 
-                const docValue = (docRes.data as any).value as SiteStandardDocument;
+                const docValue = docRes.data.value as SiteStandardDocument;
                 setOriginalDoc(docValue);
+
+                // Extract textContent from content union
+                const textContent = docValue.content && '$type' in docValue.content && docValue.content.$type === 'site.standard.content.text'
+                    ? (docValue.content as { $type: 'site.standard.content.text'; textContent: string }).textContent
+                    : '';
 
                 // Populate form
                 setInitialValues({
@@ -82,9 +77,9 @@ export default function EditArticlePage() {
                     title: docValue.title,
                     description: docValue.description || '',
                     path: docValue.path || '',
-                    content: (docValue.content as any)?.textContent || '',
+                    content: textContent,
                     tags: docValue.tags || [],
-                    coverImage: null, // Don't preload file input
+                    coverImage: null,
                 });
 
             } catch (err) {
@@ -104,44 +99,43 @@ export default function EditArticlePage() {
 
             if (values.coverImage) {
                 const res = await agent.post('com.atproto.repo.uploadBlob', {
-                    body: values.coverImage,
+                    input: values.coverImage,
                     headers: {
                         'Content-Type': values.coverImage.type,
                     }
                 });
 
-                if (!res.ok) throw new Error('Failed to upload blob');
-
-                const data = res.data;
-                if (data && typeof data === 'object' && 'blob' in data) {
-                    coverImageBlob = (data as { blob: BlobRef }).blob as any; // Cast as any if Types mismatch slightly
-                }
+                if (!res.ok || !res.data) throw new Error('Failed to upload blob');
+                coverImageBlob = res.data.blob;
             }
 
-            const putRes = await agent.post('com.atproto.repo.putRecord', {
+            const documentRecord: SiteStandardDocument = {
+                $type: 'site.standard.document',
+                site: publication.uri as `${string}:${string}`,
+                path: values.path,
+                title: values.title,
+                description: values.description || undefined,
+                content: {
+                    $type: 'site.standard.content.text',
+                    textContent: values.content
+                },
+                tags: values.tags.length > 0 ? values.tags : undefined,
+                coverImage: coverImageBlob,
+                publishedAt: originalDoc.publishedAt,
+                updatedAt: new Date().toISOString(),
+            };
+
+            await agent.post('com.atproto.repo.applyWrites', {
                 input: {
                     repo: session.info.sub,
-                    collection: 'site.standard.document',
-                    rkey: articleRkey,
-                    record: {
-                        $type: 'site.standard.document',
-                        site: publication.uri, // Ensure we use AT-URI
-                        path: values.path,
-                        title: values.title,
-                        description: values.description,
-                        content: {
-                            $type: 'site.standard.content.text',
-                            textContent: values.content
-                        },
-                        tags: values.tags,
-                        coverImage: coverImageBlob,
-                        publishedAt: originalDoc.publishedAt, // Preserve publishedAt
-                        updatedAt: new Date().toISOString(),
-                    }
+                    writes: [{
+                        $type: 'com.atproto.repo.applyWrites#update',
+                        collection: 'site.standard.document',
+                        rkey: articleRkey,
+                        value: documentRecord
+                    }]
                 }
             });
-
-            if (!putRes.ok) throw new Error('Failed to update record');
 
             notifications.show({
                 title: t('update_success'),

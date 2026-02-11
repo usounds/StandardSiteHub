@@ -143,11 +143,7 @@
     "create_success": "Creation Successful",
     "create_success_message": "Article created successfully",
     "create_error": "Creation Failed",
-    "create_error_message": "An error occurred while creating the article.",
-    "update_success": "Update Successful",
-    "update_success_message": "Article updated successfully.",
-    "update_error": "Update Failed",
-    "update_error_message": "An error occurred while updating the article."
+    "create_error_message": "An error occurred while creating the article."
   },
   "EditArticle": {
     "title": "Edit Article",
@@ -163,7 +159,16 @@
     "tags_placeholder": "Enter tags (press Enter)",
     "cover_image": "Cover Image",
     "cover_image_placeholder": "Select a new image to replace (max 1MB)",
-    "update": "Update"
+    "update": "Update",
+    "update_success": "Update Successful",
+    "update_success_message": "Article updated successfully.",
+    "update_error": "Update Failed",
+    "update_error_message": "An error occurred while updating the article.",
+    "verify_success": "Verification Successful",
+    "verify_success_message": "Site information auto-filled",
+    "partially_verified_note": "Successfully fetched page information, but SSH protocol verification is incomplete. You can still proceed with creation.",
+    "verify_error": "Verification Error",
+    "verify_error_message": "Failed to fetch site information"
   },
   "Footer": {
     "developed_by": "Developed by usounds.work"

@@ -14,14 +14,6 @@ import type { Main as SiteStandardDocument } from '@/lib/lexicons/types/site/sta
 import type { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
 import { ArticleForm, FormValues } from '@/components/sites/ArticleForm';
 
-// Define BlobRef locally to match the generated Lexicon types and API response
-interface BlobRef {
-    $type: 'blob';
-    ref: { $link: string };
-    mimeType: string;
-    size: number;
-}
-
 export default function NewArticlePage() {
     const t = useTranslations('NewArticle');
     const { agent, session } = useAuth();
@@ -36,24 +28,17 @@ export default function NewArticlePage() {
 
         setSubmitting(true);
         try {
-            let coverImageBlob: BlobRef | undefined = undefined;
+            let coverImageBlob: SiteStandardDocument['coverImage'] = undefined;
             if (values.coverImage) {
                 const res = await agent.post('com.atproto.repo.uploadBlob', {
-                    body: values.coverImage,
+                    input: values.coverImage,
                     headers: {
                         'Content-Type': values.coverImage.type,
                     }
                 });
 
-                if (!res.ok) {
-                    throw new Error('Failed to upload blob');
-                }
-
-                // Ensure the response data matches BlobRef structure
-                const data = res.data;
-                if (data && typeof data === 'object' && 'blob' in data) {
-                    coverImageBlob = (data as { blob: BlobRef }).blob;
-                }
+                if (!res.ok || !res.data) throw new Error('Failed to upload blob');
+                coverImageBlob = res.data.blob;
             }
 
             const pubRes = await agent.get('com.atproto.repo.getRecord', {

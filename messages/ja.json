@@ -143,11 +143,7 @@
         "create_success": "作成成功",
         "create_success_message": "記事を作成しました",
         "create_error": "作成失敗",
-        "create_error_message": "記事の作成中にエラーが発生しました。",
-        "update_success": "更新成功",
-        "update_success_message": "記事を更新しました。",
-        "update_error": "更新失敗",
-        "update_error_message": "記事の更新中にエラーが発生しました。"
+        "create_error_message": "記事の作成中にエラーが発生しました。"
     },
     "EditArticle": {
         "title": "記事の編集",
@@ -163,7 +159,16 @@
         "tags_placeholder": "タグを入力（Enterで追加）",
         "cover_image": "カバー画像",
         "cover_image_placeholder": "新しい画像を選択して置換可能 (最大1MB)",
-        "update": "更新"
+        "update": "更新",
+        "update_success": "更新成功",
+        "update_success_message": "記事を更新しました。",
+        "update_error": "更新失敗",
+        "update_error_message": "記事の更新中にエラーが発生しました。",
+        "verify_success": "検証成功",
+        "verify_success_message": "サイトの情報を自動入力しました",
+        "partially_verified_note": "ページ情報の取得に成功しましたが、記事の検証は未完了です。このまま作成できます。",
+        "verify_error": "検証エラー",
+        "verify_error_message": "サイト情報の取得に失敗しました"
     },
     "Footer": {
         "developed_by": "Developed by usounds.work"
