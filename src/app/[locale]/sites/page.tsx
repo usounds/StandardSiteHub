@@ -12,6 +12,8 @@ import { verifyPublicationOwnership, PublicationVerificationResult } from '@/app
 import { IconTrash } from '@tabler/icons-react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
+import { getWellKnownUrl } from '@/lib/verification';
+
 // Define the record structure returned by listRecords
 interface PublicationRecord {
     uri: string;
@@ -135,13 +137,7 @@ export default function PublicationsPage() {
 
     let wellKnownUrl = '';
     if (selectedPub?.value.url) {
-        try {
-            const url = new URL(selectedPub.value.url);
-            wellKnownUrl = `${url.origin}/.well-known/site.standard.publication`;
-        } catch {
-            // Fallback for invalid URLs or relative paths
-            wellKnownUrl = `${selectedPub.value.url}/.well-known/site.standard.publication`;
-        }
+        wellKnownUrl = getWellKnownUrl(selectedPub.value.url);
     } else if (selectedPub) {
         wellKnownUrl = '(URL definition missing)';
     }

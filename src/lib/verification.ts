@@ -1,8 +1,24 @@
+export function getWellKnownUrl(siteUrl: string): string {
+    try {
+        const url = new URL(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`);
+        const origin = url.origin;
+        // Remove leading and trailing slashes from path
+        const path = url.pathname.replace(/^\/|\/$/g, '');
+
+        if (!path) {
+            return `${origin}/.well-known/site.standard.publication`;
+        }
+
+        return `${origin}/.well-known/site.standard.publication/${path}`;
+    } catch (err) {
+        console.error('Invalid URL for well-known construction:', siteUrl);
+        return siteUrl; // Fallback
+    }
+}
+
 export async function verifySite(url: string, expectedAtUri: string): Promise<boolean> {
     try {
-        // Ensure URL has protocol
-        const baseUrl = url.startsWith('http') ? url : `https://${url}`;
-        const wellKnownUrl = new URL('/.well-known/site.standard.publication', baseUrl).toString();
+        const wellKnownUrl = getWellKnownUrl(url);
 
         const res = await fetch(wellKnownUrl, {
             method: 'GET',

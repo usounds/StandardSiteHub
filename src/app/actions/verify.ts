@@ -1,6 +1,7 @@
 "use server";
 
 import * as cheerio from 'cheerio';
+import { getWellKnownUrl } from '@/lib/verification';
 
 export interface VerificationStep {
     key: string;
@@ -115,34 +116,72 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                 const document = recordData.value;
                                 addStep('fetch_record', 'success');
 
-                                // 5. Extract Publication and Verify .well-known
+                                // 5. Fetch Publication record to get its base URL
                                 const pubUri = document.site;
                                 if (!pubUri || !pubUri.startsWith('at://')) {
                                     addStep('parse_pub_aturi', 'failure');
                                 } else {
                                     addStep('parse_pub_aturi', 'success', { uri: pubUri });
 
-                                    // Extract domain from targetUrl for .well-known check
-                                    const targetUrlObj = new URL(targetUrl);
-                                    const wellKnownUrl = `${targetUrlObj.protocol}//${targetUrlObj.host}/.well-known/site.standard.publication`;
+                                    const pubParts = pubUri.replace('at://', '').split('/');
+                                    const pubDid = pubParts[0];
+                                    const pubCollection = pubParts[1];
+                                    const pubRkey = pubParts[2];
 
-                                    try {
-                                        const wkRes = await fetch(wellKnownUrl, { signal: AbortSignal.timeout(5000) });
-                                        if (!wkRes.ok) {
-                                            addStep('fetch_wellknown', 'failure');
+                                    // Resolve PDS for publication (might be different repo)
+                                    let pubPds = pds; // Optimistic same PDS
+                                    if (pubDid !== did) {
+                                        try {
+                                            const pubDidRes = await fetch(`https://plc.directory/${pubDid}`, { signal: AbortSignal.timeout(5000) });
+                                            if (pubDidRes.ok) {
+                                                const pubDidDoc = await pubDidRes.json();
+                                                const service = pubDidDoc.service?.find((s: any) => s.id === '#atproto_pds' || s.type === 'AtprotoPersonalDataServer');
+                                                pubPds = service?.serviceEndpoint;
+                                            }
+                                        } catch (e) { }
+                                    }
+
+                                    if (!pubPds) {
+                                        addStep('resolve_pub_pds', 'failure');
+                                    } else {
+                                        const pubRecordRes = await fetch(`${pubPds}/xrpc/com.atproto.repo.getRecord?repo=${pubDid}&collection=${pubCollection}&rkey=${pubRkey}`, {
+                                            signal: AbortSignal.timeout(5000)
+                                        });
+
+                                        if (!pubRecordRes.ok) {
+                                            addStep('fetch_pub_record', 'failure');
                                         } else {
-                                            const wkContent = (await wkRes.text()).trim();
-                                            addStep('fetch_wellknown', 'success');
+                                            const pubRecordData = await pubRecordRes.json();
+                                            const publication = pubRecordData.value;
+                                            const siteUrl = publication.url;
 
-                                            if (wkContent !== pubUri) {
-                                                addStep('validate_wellknown', 'failure');
+                                            if (!siteUrl) {
+                                                addStep('validate_pub_url', 'failure');
                                             } else {
-                                                addStep('validate_wellknown', 'success');
-                                                fullyVerified = true;
+                                                addStep('validate_pub_url', 'success', { url: siteUrl });
+
+                                                const wellKnownUrl = getWellKnownUrl(siteUrl);
+
+                                                try {
+                                                    const wkRes = await fetch(wellKnownUrl, { signal: AbortSignal.timeout(5000) });
+                                                    if (!wkRes.ok) {
+                                                        addStep('fetch_wellknown', 'failure');
+                                                    } else {
+                                                        const wkContent = (await wkRes.text()).trim();
+                                                        addStep('fetch_wellknown', 'success');
+
+                                                        if (wkContent !== pubUri) {
+                                                            addStep('validate_wellknown', 'failure');
+                                                        } else {
+                                                            addStep('validate_wellknown', 'success');
+                                                            fullyVerified = true;
+                                                        }
+                                                    }
+                                                } catch (e) {
+                                                    addStep('fetch_wellknown', 'failure');
+                                                }
                                             }
                                         }
-                                    } catch (e) {
-                                        addStep('fetch_wellknown', 'failure');
                                     }
                                 }
                             }

@@ -35,8 +35,7 @@ export function SiteForm({ initialValues, onSubmit, isSubmitting, mode, existing
             url: (value) => {
                 if (!value) return t('validation_required');
                 try {
-                    const url = new URL(value);
-                    if (mode === 'create' && url.pathname !== '/' && url.pathname !== '') return t('validation_url_path');
+                    new URL(value);
                 } catch { return t('validation_url'); }
                 return null;
             },

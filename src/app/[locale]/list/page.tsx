@@ -2,6 +2,7 @@ import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Butto
 import { IconExternalLink } from '@tabler/icons-react';
 import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
+import { getWellKnownUrl } from '@/lib/verification';
 
 export const revalidate = 60;
 export const dynamic = 'force-static';
@@ -41,8 +42,7 @@ function getBlobUrl(did: string, cid: string): string {
 
 async function verifyPublication(siteUrl: string, atUri: string): Promise<boolean> {
     try {
-        const url = new URL(siteUrl);
-        const wellKnownUrl = `${url.origin}/.well-known/site.standard.publication`;
+        const wellKnownUrl = getWellKnownUrl(siteUrl);
         const res = await fetch(wellKnownUrl, {
             headers: { 'User-Agent': 'StandardSiteIntegration/1.0 (bot)' },
             signal: AbortSignal.timeout(5000),

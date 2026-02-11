@@ -1,5 +1,7 @@
 "use server";
 
+import { getWellKnownUrl } from '@/lib/verification';
+
 export interface PublicationVerificationResult {
     verified: boolean;
     expectedUri: string;
@@ -16,9 +18,7 @@ export async function verifyPublicationOwnership(
     expectedAtUri: string
 ): Promise<PublicationVerificationResult> {
     try {
-        // Extract the origin (protocol + domain) from the site URL
-        const url = new URL(siteUrl);
-        const wellKnownUrl = `${url.origin}/.well-known/site.standard.publication`;
+        const wellKnownUrl = getWellKnownUrl(siteUrl);
 
         const response = await fetch(wellKnownUrl, {
             headers: { 'User-Agent': 'StandardSiteIntegration/1.0 (bot)' },
