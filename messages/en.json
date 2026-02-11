@@ -1,4 +1,8 @@
 {
+  "Metadata": {
+    "title": "Standard Site Hub",
+    "description": "Manage your standard sites and articles"
+  },
   "Index": {
     "title": "Standard Site Hub",
     "logout": "Logout",

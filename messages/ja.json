@@ -1,4 +1,8 @@
 {
+    "Metadata": {
+        "title": "Standard Site Hub",
+        "description": "既存のブログやウェブサイトを、AT ProtocolのStandard Siteとして簡単に公開・管理するためのツールです。"
+    },
     "Index": {
         "title": "Standard Site Hub",
         "logout": "ログアウト",
