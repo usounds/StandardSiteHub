@@ -3,15 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "next dev -p 4200",
+    "lint": "eslint",
+    "start": "next start"
   },
   "dependencies": {
+    "@atcute/atproto": "^3.1.10",
+    "@atcute/bluesky": "^3.2.17",
+    "@atcute/client": "^4.2.1",
+    "@atcute/identity-resolver": "^1.2.2",
+    "@atcute/lex-cli": "^2.5.3",
+    "@atcute/lexicons": "^1.2.8",
+    "@atcute/oauth-browser-client": "^3.0.0",
+    "@atcute/tid": "^1.1.1",
+    "@mantine/core": "^8.3.14",
+    "@mantine/form": "^8.3.14",
+    "@mantine/hooks": "^8.3.14",
+    "@mantine/notifications": "^8.3.14",
+    "@tabler/icons-react": "^3.36.1",
+    "cheerio": "^1.2.0",
     "next": "16.1.6",
+    "next-intl": "^4.8.2",
+    "postcss": "^8.5.6",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "sst": "3.17.38",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",

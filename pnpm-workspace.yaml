@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - '@atcute/time-ms'
+  - '@parcel/watcher'
+  - '@swc/core'
+  - aws-sdk
+  - sharp
+  - unrs-resolver
