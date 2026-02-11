@@ -59,7 +59,7 @@ export default async function PublicListPage() {
             signal: AbortSignal.timeout(15000),
         });
         if (res.ok) {
-            records = await res.json();
+            records = (await res.json()).slice(0, 42);
         }
     } catch (err) {
         console.error('Failed to fetch publication records:', err);

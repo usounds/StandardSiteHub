@@ -213,7 +213,7 @@
     },
     "PublicList": {
         "title": "パブリケーション一覧",
-        "description": "AT Protocol上の全てのsite.standard.publicationレコードを表示しています。",
+        "description": "AT Protocol上の最新の42件のsite.standard.publicationレコードを表示しています。",
         "no_sites": "パブリケーションが見つかりません。",
         "verified": "検証済み",
         "unverified": "未検証",

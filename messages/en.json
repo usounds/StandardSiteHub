@@ -213,7 +213,7 @@
   },
   "PublicList": {
     "title": "Publication List",
-    "description": "All site.standard.publication records on AT Protocol.",
+    "description": "Showing only the latest 42 site.standard.publication records on AT Protocol.",
     "no_sites": "No publications found.",
     "verified": "Verified",
     "unverified": "Unverified",
