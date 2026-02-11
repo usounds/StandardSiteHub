@@ -131,10 +131,18 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
                         <Button onClick={handleVerify} loading={verifying} variant="light">{t('verify')}</Button>
                     </Group>
 
+                    {verificationResult?.success && !verificationResult?.fullyVerified && (
+                        <Text size="xs" c="orange" fw={500}>
+                            {t('partially_verified_note') || 'ページ情報の取得に成功しましたが、SSHプロトコルの検証は未完了です。このまま作成できます。'}
+                        </Text>
+                    )}
+
                     {verificationResult?.steps && (
                         <Stack gap="xs">
                             <Group justify="space-between" onClick={() => setShowSteps(!showSteps)} style={{ cursor: 'pointer' }}>
-                                <Text size="sm" fw={500} c="dimmed">Detailed Verification Status</Text>
+                                <Text size="sm" fw={500} c="dimmed">
+                                    {verificationResult.fullyVerified ? 'Protocol Verification Status' : 'Verification & Metadata Status'}
+                                </Text>
                                 {showSteps ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                             </Group>
                             <Collapse in={showSteps}>

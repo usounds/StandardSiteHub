@@ -194,20 +194,23 @@ export default function EditSitePage() {
             <Title mb="lg">{t('title')}</Title>
             <form onSubmit={form.onSubmit(handleSubmit)}>
                 <Stack>
-                    <TextInput
-                        label={t('site_url')}
-                        placeholder="https://mysite.com"
-                        required
-                        {...form.getInputProps('url')}
-                    />
-                    <Button
-                        variant="light"
-                        onClick={handleFetchOGP}
-                        loading={loadingOGP}
-                        disabled={!form.values.url}
-                    >
-                        {t('fetch_ogp')}
-                    </Button>
+                    <Group align="end">
+                        <TextInput
+                            label={t('site_url')}
+                            placeholder="https://mysite.com"
+                            required
+                            style={{ flex: 1 }}
+                            {...form.getInputProps('url')}
+                        />
+                        <Button
+                            variant="light"
+                            onClick={handleFetchOGP}
+                            loading={loadingOGP}
+                            disabled={!form.values.url}
+                        >
+                            {t('fetch_ogp')}
+                        </Button>
+                    </Group>
 
                     <TextInput
                         label={t('name')}

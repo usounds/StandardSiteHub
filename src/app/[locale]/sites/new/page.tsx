@@ -158,33 +158,36 @@ export default function NewSitePage() {
             <Title mb="lg">{t('title')}</Title>
             <form onSubmit={form.onSubmit(handleSubmit)}>
                 <Stack>
-                    <TextInput
-                        label={t('site_url')}
-                        placeholder="https://mysite.com"
-                        required
-                        {...form.getInputProps('url')}
-                        onChange={(event) => {
-                            const value = event.currentTarget.value;
-                            form.setFieldValue('url', value);
-                            try {
-                                const url = new URL(value);
-                                const hostname = url.hostname;
-                                const firstPart = hostname.split('.')[0];
-                                const sanitized = firstPart.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 15);
-                                if (sanitized) {
-                                    form.setFieldValue('rkey', sanitized);
-                                }
-                            } catch { }
-                        }}
-                    />
-                    <Button
-                        variant="light"
-                        onClick={handleFetchOGP}
-                        loading={loadingOGP}
-                        disabled={!form.values.url}
-                    >
-                        {t('fetch_ogp')}
-                    </Button>
+                    <Group align="end">
+                        <TextInput
+                            label={t('site_url')}
+                            placeholder="https://mysite.com"
+                            required
+                            style={{ flex: 1 }}
+                            {...form.getInputProps('url')}
+                            onChange={(event) => {
+                                const value = event.currentTarget.value;
+                                form.setFieldValue('url', value);
+                                try {
+                                    const url = new URL(value);
+                                    const hostname = url.hostname;
+                                    const firstPart = hostname.split('.')[0];
+                                    const sanitized = firstPart.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 15);
+                                    if (sanitized) {
+                                        form.setFieldValue('rkey', sanitized);
+                                    }
+                                } catch { }
+                            }}
+                        />
+                        <Button
+                            variant="light"
+                            onClick={handleFetchOGP}
+                            loading={loadingOGP}
+                            disabled={!form.values.url}
+                        >
+                            {t('fetch_ogp')}
+                        </Button>
+                    </Group>
 
                     <TextInput
                         label={t('rkey')}

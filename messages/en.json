@@ -137,6 +137,7 @@
     "create": "Create Article",
     "verify_success": "Verification Successful",
     "verify_success_message": "Site information auto-filled",
+    "partially_verified_note": "Successfully fetched page information, but SSH protocol verification is incomplete. You can still proceed with creation.",
     "verify_error": "Verification Error",
     "verify_error_message": "Failed to fetch site information",
     "create_success": "Creation Successful",
