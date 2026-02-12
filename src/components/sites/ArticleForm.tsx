@@ -151,7 +151,7 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
 
                 try {
                     const url = new URL(form.values.siteUrl);
-                    form.setFieldValue('path', url.pathname);
+                    form.setFieldValue('path', url.pathname + url.search + url.hash);
                 } catch { }
 
                 // Fetch OGP image for cover image

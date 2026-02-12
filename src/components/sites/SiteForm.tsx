@@ -72,8 +72,11 @@ export function SiteForm({ initialValues, onSubmit, isSubmitting, mode, existing
 
         if (!/^https?:\/\//i.test(url) && url.includes('.')) {
             url = `https://${url}`;
-            form.setFieldValue('url', url);
         }
+
+        // Remove trailing slashes (Lexicon spec: Avoid trailing slashes)
+        url = url.replace(/\/+$/, '');
+        form.setFieldValue('url', url);
 
         setLoadingOGP(true);
         try {
