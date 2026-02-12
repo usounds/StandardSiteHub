@@ -132,7 +132,7 @@
     "step_extract_metadata_failure": "Failed to extract metadata",
     "step_extract_aturi": "Extract document AT URI",
     "step_extract_aturi_success": "Found document AT URI: {uri}",
-    "step_extract_aturi_failure": "Missing or invalid AT-URI link tag",
+    "step_extract_aturi_failure": "Link tag not found on the page",
     "step_parse_aturi": "Parse document AT URI",
     "step_parse_aturi_success": "AT URI is well-formed",
     "step_parse_aturi_failure": "AT-URI is malformed",

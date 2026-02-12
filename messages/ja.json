@@ -132,7 +132,7 @@
         "step_extract_metadata_failure": "メタデータの抽出に失敗しました",
         "step_extract_aturi": "ドキュメントAT URIの抽出",
         "step_extract_aturi_success": "ドキュメントAT URI: {uri}",
-        "step_extract_aturi_failure": "AT-URIリンクタグが見つからないか無効です",
+        "step_extract_aturi_failure": "ページにLinkタグが見つかりません",
         "step_parse_aturi": "ドキュメントAT URIの解析",
         "step_parse_aturi_success": "AT URIは正しい形式です",
         "step_parse_aturi_failure": "AT-URIの形式が不正です",

@@ -134,6 +134,14 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
         setShowSteps(true);
         try {
             const res = await verifyDocument(form.values.siteUrl);
+
+            // Check if AT-URI extraction failed
+            const atUriStep = res.steps?.find(s => s.key === 'extract_aturi');
+            const atUriFailed = atUriStep?.status === 'failure';
+
+            if (atUriFailed) {
+                res.success = false;
+            }
             setVerificationResult(res);
 
             if (res.success) {
