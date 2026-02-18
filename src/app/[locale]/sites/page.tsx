@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
-import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, Image, ActionIcon, Modal, Code, Stack } from '@mantine/core';
+import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, Image, ActionIcon, Modal, Code, Stack, Box } from '@mantine/core';
+import NextImage from 'next/image';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/lib/auth-context';
@@ -21,12 +22,31 @@ interface PublicationRecord {
     value: SiteStandardPublication;
 }
 
-/**
- * Build a URL to fetch a blob from the PDS.
- * Uses the public bsky.social XRPC endpoint for compatibility.
- */
-function getBlobUrl(did: string, cid: string): string {
-    return `https://bsky.social/xrpc/com.atproto.sync.getBlob?did=${encodeURIComponent(did)}&cid=${encodeURIComponent(cid)}`;
+interface ResolvedDidDoc {
+    did: string;
+    handle: string;
+    pds: string;
+    signing_key: string;
+}
+
+async function resolvePds(did: string): Promise<string> {
+    try {
+        const res = await fetch(`https://slingshot.microcosm.blue/xrpc/blue.microcosm.identity.resolveMiniDoc?identifier=${did}`, {
+            // cache resolution for 1 hour
+            next: { revalidate: 3600 },
+        });
+        if (res.ok) {
+            const data = await res.json() as ResolvedDidDoc;
+            return data.pds;
+        }
+    } catch (e) {
+        console.error('Failed to resolve PDS for', did, e);
+    }
+    return 'https://bsky.social'; // Fallback
+}
+
+function getBlobUrl(pds: string, did: string, cid: string): string {
+    return `${pds}/xrpc/com.atproto.sync.getBlob?did=${encodeURIComponent(did)}&cid=${encodeURIComponent(cid)}`;
 }
 
 export default function PublicationsPage() {
@@ -37,6 +57,7 @@ export default function PublicationsPage() {
     const [verificationStatus, setVerificationStatus] = useState<Record<string, PublicationVerificationResult>>({});
     const [verifying, setVerifying] = useState<Record<string, boolean>>({});
     const [selectedPub, setSelectedPub] = useState<PublicationRecord | null>(null);
+    const [userPds, setUserPds] = useState<string>('https://bsky.social');
     const [opened, { open, close }] = useDisclosure(false);
 
     const fetchPublications = useCallback(async () => {
@@ -73,6 +94,11 @@ export default function PublicationsPage() {
             setLoading(false);
         }
     }, [agent, session]);
+
+    useEffect(() => {
+        if (!session?.info.sub) return;
+        resolvePds(session.info.sub).then(setUserPds);
+    }, [session?.info.sub]);
 
     useEffect(() => {
         if (isLoading) return;
@@ -162,12 +188,15 @@ export default function PublicationsPage() {
                             <Card key={pub.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
                                 <Card.Section>
                                     {iconRef && did ? (
-                                        <Image
-                                            src={getBlobUrl(did, iconRef)}
-                                            h={160}
-                                            alt={pub.value.name}
-                                            fallbackSrc=""
-                                        />
+                                        <Box h={160} w="100%" pos="relative" bg="gray.1">
+                                            <NextImage
+                                                src={getBlobUrl(userPds, did, iconRef)}
+                                                alt={pub.value.name}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                style={{ objectFit: 'cover' }}
+                                            />
+                                        </Box>
                                     ) : (
                                         <Center h={160} bg="gray.1">
                                             <Text c="dimmed">{t('icon')}</Text>
