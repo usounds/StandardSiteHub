@@ -234,6 +234,9 @@
         "unverified_tooltip": "このサイトのドメインはまだ検証されていません",
         "visit_site": "サイトを訪問",
         "icon": "アイコン",
-        "total_sites": "全 {count} サイト"
+        "total_sites": "最新 {count} サイト",
+        "unverified_reason_no_url": "サイトURLが登録されていません",
+        "unverified_reason_network": "ドメインとの通信に失敗しました",
+        "unverified_reason_mismatch": ".well-knownの内容とAT-URIが一致しません"
     }
 }

@@ -234,6 +234,9 @@
     "unverified_tooltip": "This site's domain has not been verified yet",
     "visit_site": "Visit Site",
     "icon": "Icon",
-    "total_sites": "{count} sites total"
+    "total_sites": "Latest {count} sites",
+    "unverified_reason_no_url": "Site URL is not registered",
+    "unverified_reason_network": "Failed to connect to the domain",
+    "unverified_reason_mismatch": "AT-URI mismatch in .well-known"
   }
 }

@@ -1,6 +1,7 @@
 import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Button, Group, Image, Box } from '@mantine/core';
 import NextImage from 'next/image';
-import { IconExternalLink } from '@tabler/icons-react';
+import { IconWorld } from '@tabler/icons-react';
+import classes from './ListCard.module.css';
 import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getWellKnownUrl } from '@/lib/verification';
@@ -65,7 +66,7 @@ function getBlobUrl(pds: string, did: string, cid: string): string {
     return `${pds}/xrpc/com.atproto.sync.getBlob?did=${encodeURIComponent(did)}&cid=${encodeURIComponent(cid)}`;
 }
 
-async function verifyPublication(siteUrl: string, atUri: string): Promise<boolean> {
+async function verifyPublication(siteUrl: string, atUri: string): Promise<{ verified: boolean, reason?: string }> {
     try {
         const wellKnownUrl = getWellKnownUrl(siteUrl);
         const res = await fetch(wellKnownUrl, {
@@ -73,11 +74,15 @@ async function verifyPublication(siteUrl: string, atUri: string): Promise<boolea
             signal: AbortSignal.timeout(5000),
             next: { revalidate: 60 },
         });
-        if (!res.ok) return false;
+        if (!res.ok) return { verified: false, reason: 'unverified_reason_network' };
         const body = await res.text();
-        return body.trim() === atUri;
+        if (body.trim() === atUri) {
+            return { verified: true };
+        } else {
+            return { verified: false, reason: 'unverified_reason_mismatch' };
+        }
     } catch {
-        return false;
+        return { verified: false, reason: 'unverified_reason_network' };
     }
 }
 
@@ -103,18 +108,21 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
         Promise.allSettled(
             records.map(async (rec) => {
                 const atUri = `at://${rec.did}/${rec.collection}/${rec.rkey}`;
-                if (!rec.record.url) return { atUri, verified: false };
-                const verified = await verifyPublication(rec.record.url, atUri);
-                return { atUri, verified };
+                if (!rec.record.url) return { atUri, verified: false, reason: 'unverified_reason_no_url' };
+                const result = await verifyPublication(rec.record.url, atUri);
+                return { atUri, ...result };
             })
         ),
         Promise.allSettled(records.map(rec => resolvePds(rec.did)))
     ]);
 
-    const verificationMap: Record<string, boolean> = {};
+    const verificationMap: Record<string, { verified: boolean, reason?: string }> = {};
     verificationResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
-            verificationMap[records[index].did + '/' + records[index].rkey] = result.value.verified;
+            verificationMap[records[index].did + '/' + records[index].rkey] = {
+                verified: result.value.verified,
+                reason: result.value.reason
+            };
         }
     });
 
@@ -143,67 +151,71 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
                     {records.map((rec) => {
                         const key = rec.did + '/' + rec.rkey;
-                        const isVerified = verificationMap[key] ?? false;
+                        const verification = verificationMap[key] ?? { verified: false, reason: 'unverified_reason_network' };
+                        const isVerified = verification.verified;
                         const iconRef = rec.record.icon?.ref?.$link;
                         const atUri = `at://${rec.did}/${rec.collection}/${rec.rkey}`;
 
                         return (
-                            <Card key={key} shadow="sm" padding="lg" radius="md" withBorder>
+                            <Card key={key} shadow="sm" padding="lg" radius="lg" withBorder component="a" href={rec.record.url || '#'} target="_blank" rel="noopener noreferrer" className={classes.card}>
                                 <Box mx="calc(var(--card-padding) * -1)" mt="calc(var(--card-padding) * -1)">
                                     {iconRef ? (
-                                        <Box h={160} w="100%" pos="relative" bg="gray.1">
+                                        <Box h={160} w="100%" pos="relative" bg="gray.1" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
                                             <NextImage
                                                 src={getBlobUrl(pdsMap[rec.did], rec.did, iconRef)}
                                                 alt={rec.record.name}
                                                 fill
+                                                unoptimized
                                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                                 style={{ objectFit: 'cover' }}
                                             />
                                         </Box>
                                     ) : (
-                                        <Center h={160} bg="gray.1">
+                                        <Center h={160} bg="gray.1" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
                                             <Text c="dimmed">{t('icon')}</Text>
                                         </Center>
                                     )}
                                 </Box>
 
-                                <Group justify="space-between" mt="md" mb="xs">
-                                    <Text fw={500} lineClamp={1} style={{ flex: 1 }}>{rec.record.name}</Text>
-                                    {isVerified ? (
-                                        <Tooltip label={t('verified_tooltip')}>
-                                            <Badge color="green" variant="filled" leftSection="✓">
-                                                {t('verified')}
-                                            </Badge>
-                                        </Tooltip>
-                                    ) : (
-                                        <Tooltip label={t('unverified_tooltip')}>
-                                            <Badge color="orange" variant="light">
-                                                {t('unverified')}
-                                            </Badge>
-                                        </Tooltip>
+                                <Box mt="md" mb="xs" style={{ flex: 1 }}>
+                                    {rec.record.url && (
+                                        <Group gap="xs" mb={8} wrap="nowrap">
+                                            <IconWorld size={14} style={{ color: 'var(--mantine-color-dimmed)' }} />
+                                            <Text size="xs" c="dimmed" lineClamp={1}>
+                                                {(() => {
+                                                    try {
+                                                        return new URL(rec.record.url).hostname;
+                                                    } catch {
+                                                        return rec.record.url;
+                                                    }
+                                                })()}
+                                            </Text>
+                                        </Group>
                                     )}
-                                </Group>
 
-                                <Text size="sm" c="dimmed" lineClamp={3} h={60}>
-                                    {rec.record.description}
-                                </Text>
+                                    <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                        <Text fw={600} size="lg" lineClamp={2} style={{ flex: 1, lineHeight: 1.3 }}>
+                                            {rec.record.name}
+                                        </Text>
+                                        {isVerified ? (
+                                            <Tooltip label={t('verified_tooltip')}>
+                                                <Badge color="green" variant="light" size="sm" leftSection="✓" style={{ flexShrink: 0 }}>
+                                                    {t('verified')}
+                                                </Badge>
+                                            </Tooltip>
+                                        ) : (
+                                            <Tooltip label={verification.reason ? t(verification.reason) : t('unverified_tooltip')}>
+                                                <Badge color="gray" variant="light" size="sm" style={{ flexShrink: 0 }}>
+                                                    {t('unverified')}
+                                                </Badge>
+                                            </Tooltip>
+                                        )}
+                                    </Group>
 
-                                {rec.record.url && (
-                                    <Button
-                                        component="a"
-                                        href={rec.record.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        variant="light"
-                                        color="blue"
-                                        fullWidth
-                                        mt="md"
-                                        radius="md"
-                                        rightSection={<IconExternalLink size={14} />}
-                                    >
-                                        {t('visit_site')}
-                                    </Button>
-                                )}
+                                    <Text size="sm" c="dimmed" lineClamp={3} mt="sm">
+                                        {rec.record.description}
+                                    </Text>
+                                </Box>
                             </Card>
                         );
                     })}
