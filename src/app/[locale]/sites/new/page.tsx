@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { SiteForm, SiteFormValues } from '@/components/sites/SiteForm';
-import { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
+import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function NewSitePage() {
@@ -38,9 +38,9 @@ export default function NewSitePage() {
                 description: values.description || undefined,
                 icon: iconBlobRef,
                 preferences: {
-                    $type: 'site.standard.publication#preferences',
                     showInDiscover: values.showInDiscover
                 },
+                createdAt: new Date().toISOString(),
             };
 
             await agent.post('com.atproto.repo.applyWrites', {

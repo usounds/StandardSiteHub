@@ -20,11 +20,9 @@ export const siteStandardDocumentSchema = z.object({
             uri: z.string(),
             cid: z.string()
         }),
-        z.object({
-            textContent: z.string() // As per user request "textContent"
-        }).transform(val => ({ $type: 'site.standard.content.text', ...val })),
         z.record(z.string(), z.any()) // Fallback
-    ]),
+    ]).optional(),
+    textContent: z.string().optional(),
     // User definition says: 
     // textContent: plain text representation...
     // content: open union.

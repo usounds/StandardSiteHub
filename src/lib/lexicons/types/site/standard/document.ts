@@ -18,10 +18,6 @@ const _mainSchema = /*#__PURE__*/ v.record(
    */
   get content() {
     return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.variant([
-        /*#__PURE__*/ v.object({
-      $type: /*#__PURE__*/ v.literal('site.standard.content.text'),
-      textContent: /*#__PURE__*/ v.string(),
-    }),
     ]));
   },
   /**

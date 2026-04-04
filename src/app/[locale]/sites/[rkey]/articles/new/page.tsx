@@ -10,7 +10,7 @@ import * as TID from '@atcute/tid';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons-react';
 
-import type { Main as SiteStandardDocument } from '@/lib/lexicons/types/site/standard/document';
+import { SiteStandardDocument } from '@/lib/lexicons/site-standard-document';
 import { ArticleForm, FormValues } from '@/components/sites/ArticleForm';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
@@ -70,10 +70,7 @@ export default function NewArticlePage() {
                 path: values.path,
                 title: values.title,
                 description: values.description || undefined,
-                content: {
-                    $type: 'site.standard.content.text',
-                    textContent: values.content
-                },
+                textContent: values.content,
                 tags: values.tags.length > 0 ? values.tags : undefined,
                 coverImage: coverImageBlob,
                 publishedAt: new Date().toISOString(),

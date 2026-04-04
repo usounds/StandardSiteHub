@@ -251,7 +251,7 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
                                 </Text>
                                 {showSteps ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                             </Group>
-                            <Collapse in={showSteps}>
+                            <Collapse expanded={showSteps}>
                                 <Stack gap="xs" pl="sm">
                                     {verificationResult.steps.map((step, idx) => (
                                         <Group key={idx} gap="xs">

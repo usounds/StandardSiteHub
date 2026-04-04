@@ -44,7 +44,7 @@ export default async function LocaleLayout({
         <ColorSchemeScript />
       </head>
       <body>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <MantineProvider>
             <Notifications />
             <AuthProvider>

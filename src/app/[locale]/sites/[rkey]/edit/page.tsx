@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from '@/i18n/routing';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Main as SiteStandardPublication } from '@/lib/lexicons/types/site/standard/publication';
+import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { SiteForm, SiteFormValues } from '@/components/sites/SiteForm';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
@@ -20,6 +20,7 @@ export default function EditSitePage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [existingIcon, setExistingIcon] = useState<SiteStandardPublication['icon']>(undefined);
+    const [createdAt, setCreatedAt] = useState<string>('');
     const [initialValues, setInitialValues] = useState<SiteFormValues | null>(null);
 
     useEffect(() => {
@@ -50,6 +51,7 @@ export default function EditSitePage() {
                     icon: null,
                     showInDiscover: data.preferences?.showInDiscover ?? true,
                 });
+                setCreatedAt(data.createdAt);
                 if (data.icon) {
                     setExistingIcon(data.icon);
                 }
@@ -85,9 +87,9 @@ export default function EditSitePage() {
                 description: values.description || undefined,
                 icon: iconBlobRef,
                 preferences: {
-                    $type: 'site.standard.publication#preferences',
                     showInDiscover: values.showInDiscover
                 },
+                createdAt: createdAt || new Date().toISOString(),
             };
 
             await agent.post('com.atproto.repo.applyWrites', {

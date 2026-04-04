@@ -32,14 +32,14 @@ export function SiteForm({ initialValues, onSubmit, isSubmitting, mode, existing
     const form = useForm<SiteFormValues>({
         initialValues,
         validate: {
-            url: (value) => {
+            url: (value: string) => {
                 if (!value) return t('validation_required');
                 try {
                     new URL(value);
                 } catch { return t('validation_url'); }
                 return null;
             },
-            rkey: (value) => {
+            rkey: (value: string) => {
                 if (mode === 'create') {
                     if (!value) return t('validation_required');
                     if (value.length > 15) return t('validation_rkey_max');
@@ -47,16 +47,16 @@ export function SiteForm({ initialValues, onSubmit, isSubmitting, mode, existing
                 }
                 return null;
             },
-            name: (value) => {
+            name: (value: string) => {
                 if (!value) return t('validation_required');
                 if (value.length > 5000) return t('validation_name_max');
                 return null;
             },
-            description: (value) => {
+            description: (value: string | undefined) => {
                 if (value && value.length > 30000) return t('validation_description_max');
                 return null;
             },
-            icon: (value) => {
+            icon: (value: File | null) => {
                 if (value) {
                     if (value.size > 1_000_000) return t('validation_icon_size');
                     if (!value.type.startsWith('image/')) return t('validation_icon_type');
