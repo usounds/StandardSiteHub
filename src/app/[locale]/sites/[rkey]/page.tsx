@@ -238,7 +238,7 @@ export default function PublicationDocumentsPage() {
                     {documents.map((doc) => {
                         const verifyResult = docVerifyResults[doc.uri];
                         return (
-                            <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder>
+                            <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 <Group justify="space-between" align="flex-start" wrap="nowrap" mb="xs">
                                     <Text fw={700} size="lg" lineClamp={2} style={{ flex: 1 }}>
                                         {doc.value.title || doc.value.path}
@@ -281,7 +281,7 @@ export default function PublicationDocumentsPage() {
                                         }
                                     </Badge>
                                 )}
-                                <Group justify="flex-end" mt="xl" gap="sm">
+                                <Group justify="flex-end" mt="auto" pt="xl" gap="sm">
                                     <Button variant="subtle" color="gray" size="sm" radius="xl" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
                                         {t('edit')}
                                     </Button>

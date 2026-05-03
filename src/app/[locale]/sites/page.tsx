@@ -168,7 +168,7 @@ export default function PublicationsPage() {
                         const did = pub.uri.split('/')[2]; // at://did:plc:xxx/collection/rkey
 
                         return (
-                            <Card key={pub.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
+                            <Card key={pub.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 <Card.Section>
                                     {iconRef && did ? (
                                         <Box h={160} w="100%" pos="relative" bg="gray.1">
@@ -221,11 +221,11 @@ export default function PublicationsPage() {
                                     ) : null}
                                 </Group>
 
-                                <Text size="sm" c="dimmed" lineClamp={3} h={60}>
+                                <Text size="sm" c="dimmed" lineClamp={3}>
                                     {pub.value.description}
                                 </Text>
 
-                                <Group justify="flex-end" mt="xl" gap="sm">
+                                <Group justify="flex-end" mt="auto" pt="xl" gap="sm">
                                     <Button variant="subtle" color="gray" size="sm" radius="xl" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
                                         {t('edit')}
                                     </Button>
