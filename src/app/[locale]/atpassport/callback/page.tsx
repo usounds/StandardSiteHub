@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { Center, Container, Loader, Stack, Text, Button } from '@mantine/core';
+import { Center, Container, Stack, Text, Button } from '@mantine/core';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
+import { AuthLoading } from '@/components/auth/AuthLoading';
 import { useAuth } from '@/lib/auth-context';
 import {
     ATPASSPORT_STATE_STORAGE_KEY,
@@ -70,14 +71,5 @@ export default function AtPassportCallbackPage() {
         );
     }
 
-    return (
-        <Container size="md" h="100vh">
-            <Center h="100%">
-                <Stack align="center" gap="md">
-                    <Loader size="xl" />
-                    <Text size="sm" c="dimmed">{t('authenticating')}</Text>
-                </Stack>
-            </Center>
-        </Container>
-    );
+    return <AuthLoading message={t('authenticating')} />;
 }

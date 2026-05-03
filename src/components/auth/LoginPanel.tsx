@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { AtPassportIcon, AtPassportUI } from '@atpassport/client/ui';
-import { ATPASSPORT_STATE_STORAGE_KEY, createAtPassportClient, getCurrentReturnTo, getAtPassportLocale } from '@/lib/atpassport';
+import { ATPASSPORT_STATE_STORAGE_KEY, POST_OAUTH_RETURN_TO_STORAGE_KEY, createAtPassportClient, getCurrentReturnTo, getAtPassportLocale } from '@/lib/atpassport';
 
 interface ActorSuggestion {
     handle: string;
@@ -33,6 +33,11 @@ export function LoginPanel() {
         if (!loginHandle) return;
         setIsLoginLoading(true);
         try {
+            let returnTo = getCurrentReturnTo();
+            if (returnTo === `/${locale}` || returnTo === `/${locale}/`) {
+                returnTo = `/${locale}/sites`;
+            }
+            sessionStorage.setItem(POST_OAUTH_RETURN_TO_STORAGE_KEY, returnTo);
             await login(loginHandle);
         } catch (error) {
             console.error(error);
@@ -48,9 +53,14 @@ export function LoginPanel() {
     const handleAtPassportLogin = () => {
         setIsAtPassportLoading(true);
         try {
+            let returnTo = getCurrentReturnTo();
+            if (returnTo === `/${locale}` || returnTo === `/${locale}/`) {
+                returnTo = `/${locale}/sites`;
+            }
+
             const atp = createAtPassportClient(window.location.origin, locale);
             const { url, atpstate } = atp.generateAuthUrl({
-                returnTo: getCurrentReturnTo(),
+                returnTo,
             });
 
             sessionStorage.setItem(ATPASSPORT_STATE_STORAGE_KEY, atpstate);
@@ -88,55 +98,85 @@ export function LoginPanel() {
     }, 300);
 
     return (
-        <Paper withBorder shadow="md" p={30} radius="md" w="100%" maw={400} mx="auto">
-            <Stack>
-                <Text size="lg" fw={500} ta="center">
-                    Welcome Back
-                </Text>
-                <Text c="dimmed" size="sm" ta="center" mb="xs">
-                    {t('login_message')}
-                </Text>
+        <Paper
+            withBorder
+            shadow="xl"
+            p={40}
+            radius="lg"
+            w="100%"
+            maw={420}
+            mx="auto"
+            style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(10px)',
+            }}
+        >
+            <Stack gap="lg">
+                <div>
+                    <Text size="xl" fw={800} ta="center" c="var(--mantine-color-text)" letterSpacing="-0.5px">
+                        Welcome Back
+                    </Text>
+                    <Text c="dimmed" size="sm" ta="center" mt="xs">
+                        {t('login_message')}
+                    </Text>
+                </div>
+
                 <Button
                     onClick={handleAtPassportLogin}
                     fullWidth
                     size="md"
-                    variant="outline"
-                    color="blue"
+                    radius="md"
+                    variant="default"
                     loading={isAtPassportLoading}
                     leftSection={<AtPassportIcon size={22} />}
+                    style={{ transition: 'all 0.2s ease', '&:hover': { transform: 'translateY(-1px)', boxShadow: 'var(--mantine-shadow-sm)' } }}
                 >
                     {AtPassportUI[getAtPassportLocale(locale)].title}
                 </Button>
-                <Divider label="または" labelPosition="center" />
-                <Autocomplete
-                    label={t('handle_label')}
-                    placeholder={t('handle_placeholder')}
-                    value={loginHandle}
-                    leftSection="@"
-                    data={suggestions}
-                    onInput={(event) => handleInput(event.currentTarget.value)}
-                    onChange={(value) => {
-                        setLoginHandle(value);
-                        setSuggestions([]);
-                    }}
-                    renderOption={({ option }) => {
-                        const actor = option as ActorComboboxItem;
-                        return (
-                            <Group gap="sm">
-                                <Avatar src={actor.avatar} size={24} radius="xl" />
-                                <Text size="sm">{actor.value}</Text>
-                            </Group>
-                        );
-                    }}
-                    size="md"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    autoComplete="off"
-                    spellCheck={false}
-                />
-                <Button onClick={handleLogin} fullWidth mt="md" size="md" variant="filled" color="blue" loading={isLoginLoading}>
-                    {t('login')}
-                </Button>
+
+                <Divider label="または" labelPosition="center" my="sm" />
+
+                <Stack gap="md">
+                    <Autocomplete
+                        label={t('handle_label')}
+                        placeholder={t('handle_placeholder')}
+                        value={loginHandle}
+                        leftSection={<Text c="dimmed">@</Text>}
+                        data={suggestions}
+                        onInput={(event) => handleInput(event.currentTarget.value)}
+                        onChange={(value) => {
+                            setLoginHandle(value);
+                            setSuggestions([]);
+                        }}
+                        renderOption={({ option }) => {
+                            const actor = option as ActorComboboxItem;
+                            return (
+                                <Group gap="sm">
+                                    <Avatar src={actor.avatar} size={24} radius="xl" />
+                                    <Text size="sm">{actor.value}</Text>
+                                </Group>
+                            );
+                        }}
+                        size="md"
+                        radius="md"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        autoComplete="off"
+                        spellCheck={false}
+                    />
+                    <Button
+                        onClick={handleLogin}
+                        fullWidth
+                        size="md"
+                        radius="md"
+                        variant="filled"
+                        color="dark"
+                        loading={isLoginLoading}
+                        style={{ transition: 'all 0.2s ease', '&:hover': { transform: 'translateY(-1px)', boxShadow: 'var(--mantine-shadow-md)' } }}
+                    >
+                        {t('login')}
+                    </Button>
+                </Stack>
             </Stack>
         </Paper>
     );

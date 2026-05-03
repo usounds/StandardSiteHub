@@ -10,7 +10,7 @@ import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { verifyPublicationOwnership, PublicationVerificationResult } from '@/app/actions/verify-publication';
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrash, IconArrowRight } from '@tabler/icons-react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { resolvePds } from '@/lib/pds';
 
@@ -156,7 +156,7 @@ export default function PublicationsPage() {
             <Container size="lg" py="xl">
                 <Group justify="space-between" mb="lg">
                     <Title>{t('title')}</Title>
-                    <Button component={Link} href="/sites/new">{t('create_new')}</Button>
+                    <Button variant="filled" color="dark" radius="md" component={Link} href="/sites/new">{t('create_new')}</Button>
                 </Group>
 
                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
@@ -202,8 +202,8 @@ export default function PublicationsPage() {
                                     </ActionIcon>
                                 </Card.Section>
 
-                                <Group justify="space-between" mt="md" mb="xs">
-                                    <Text fw={500}>{pub.value.name}</Text>
+                                <Group justify="space-between" mt="md" mb="xs" align="flex-start">
+                                    <Text fw={700} size="lg" lineClamp={2} style={{ flex: 1 }}>{pub.value.name}</Text>
                                     {isVerifying ? (
                                         <Loader size="xs" />
                                     ) : verification?.verified ? (
@@ -225,16 +225,24 @@ export default function PublicationsPage() {
                                     {pub.value.description}
                                 </Text>
 
-                                <Group grow mt="md">
-                                    <Button variant="light" radius="md" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
+                                <Group justify="flex-end" mt="xl" gap="sm">
+                                    <Button variant="subtle" color="gray" size="sm" radius="xl" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
                                         {t('edit')}
                                     </Button>
                                     {verification?.verified ? (
-                                        <Button color="blue" radius="md" component={Link} href={`/sites/${pub.uri.split('/').pop()}`}>
+                                        <Button 
+                                            variant="filled" 
+                                            color="dark" 
+                                            size="sm" 
+                                            radius="xl" 
+                                            component={Link} 
+                                            href={`/sites/${pub.uri.split('/').pop()}`}
+                                            rightSection={<IconArrowRight size={16} />}
+                                        >
                                             {t('manage_documents')}
                                         </Button>
                                     ) : (
-                                        <Button color="orange" radius="md" onClick={() => handleOpenVerification(pub)}>
+                                        <Button variant="light" color="orange" size="sm" radius="xl" onClick={() => handleOpenVerification(pub)}>
                                             {t('verify_site')}
                                         </Button>
                                     )}
@@ -244,34 +252,39 @@ export default function PublicationsPage() {
                     })}
                 </SimpleGrid>
 
-                <Modal opened={opened} onClose={close} title={t('verification_modal_title')} size="lg">
+                <Modal opened={opened} onClose={close} title={<Text fw={700} size="lg">{t('verification_modal_title')}</Text>} size="lg" radius="md" overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}>
                     {selectedPub && (
-                        <Stack gap="md">
-                            <Text size="sm">
+                        <Stack gap="lg" mt="sm">
+                            <Text size="sm" c="dimmed">
                                 {t('verification_step_text')}
                             </Text>
-                            <Text size="sm">
+
+                            <Paper withBorder p="md" radius="md" bg="var(--mantine-color-gray-0)">
+                                <Stack gap="xs">
+                                    <Group justify="space-between">
+                                        <Text size="xs" fw={700} c="dimmed" tt="uppercase">{t('verification_request')}</Text>
+                                    </Group>
+                                    <Code block p="sm" bg="white" style={{ border: '1px solid var(--mantine-color-gray-3)' }}>
+                                        GET {wellKnownUrl}
+                                    </Code>
+                                </Stack>
+
+                                <Stack gap="xs" mt="md">
+                                    <Text size="xs" fw={700} c="dimmed" tt="uppercase">{t('verification_response')}</Text>
+                                    <Code block p="sm" bg="white" style={{ border: '1px solid var(--mantine-color-gray-3)' }}>
+                                        {selectedPub.uri}
+                                    </Code>
+                                </Stack>
+                            </Paper>
+
+                            <Text size="sm" fw={500}>
                                 {t('verification_confirmation_text')}
                             </Text>
 
-                            <Stack gap="xs">
-                                <Text size="xs" fw={700}>{t('verification_request')}</Text>
-                                <Code block p="xs">
-                                    GET {wellKnownUrl}
-                                </Code>
-                            </Stack>
-
-                            <Stack gap="xs">
-                                <Text size="xs" fw={700}>{t('verification_response')}</Text>
-                                <Code block p="xs">
-                                    {selectedPub.uri}
-                                </Code>
-                            </Stack>
-
                             <Group justify="flex-end" mt="md">
                                 <Button
-                                    variant="light"
-                                    color="orange"
+                                    variant="filled"
+                                    color="dark"
                                     onClick={() => handleDownloadVerificationFile(selectedPub.uri)}
                                 >
                                     {t('download_verification_file')}

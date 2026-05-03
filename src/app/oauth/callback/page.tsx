@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { finalizeAuthorization } from '@atcute/oauth-browser-client';
-import { Text, Container, Loader, Center, Stack, Button } from '@mantine/core';
+import { Text, Container, Center, Stack, Button } from '@mantine/core';
+import { AuthLoading } from '@/components/auth/AuthLoading';
 import { getErrorMessage } from '@/lib/types';
 import { POST_OAUTH_RETURN_TO_STORAGE_KEY, normalizeReturnTo } from '@/lib/atpassport';
 import { configureAtprotoOAuth } from '@/lib/oauth';
@@ -81,14 +82,5 @@ export default function OAuthCallback() {
         );
     }
 
-    return (
-        <Container size="md" h="100vh">
-            <Center h="100%">
-                <Stack align="center" gap="md">
-                    <Loader size="xl" />
-                    <Text>認証処理中...</Text>
-                </Stack>
-            </Center>
-        </Container>
-    );
+    return <AuthLoading />;
 }

@@ -231,33 +231,35 @@ export default function PublicationDocumentsPage() {
                             </Tooltip>
                         )}
                     </Group>
-                    <Button component={Link} href={`/sites/${rkey}/articles/new`}>{t('add_article')}</Button>
+                    <Button variant="filled" color="dark" radius="md" component={Link} href={`/sites/${rkey}/articles/new`}>{t('add_article')}</Button>
                 </Group>
 
                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
                     {documents.map((doc) => {
                         const verifyResult = docVerifyResults[doc.uri];
                         return (
-                            <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ position: 'relative' }}>
-                                <ActionIcon
-                                    variant="subtle"
-                                    color="red"
-                                    onClick={() => handleDeleteDocument(doc.uri)}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 10,
-                                        right: 10,
-                                        zIndex: 1,
-                                    }}
-                                    title={t('delete_article')}
-                                >
-                                    <IconTrash size={18} />
-                                </ActionIcon>
-                                <Text fw={500} pr={30}>{doc.value.title}</Text>
-                                <Text size="sm" c="dimmed" lineClamp={3}>
-                                    {doc.value.description}
-                                </Text>
-                                <Text size="xs" mt="xs" c="dimmed">
+                            <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder>
+                                <Group justify="space-between" align="flex-start" wrap="nowrap" mb="xs">
+                                    <Text fw={700} size="lg" lineClamp={2} style={{ flex: 1 }}>
+                                        {doc.value.title || doc.value.path}
+                                    </Text>
+                                    <ActionIcon
+                                        variant="subtle"
+                                        color="red"
+                                        radius="xl"
+                                        onClick={() => handleDeleteDocument(doc.uri)}
+                                        title={t('delete_article')}
+                                    >
+                                        <IconTrash size={18} />
+                                    </ActionIcon>
+                                </Group>
+                                
+                                {doc.value.description && (
+                                    <Text size="sm" c="dimmed" lineClamp={3}>
+                                        {doc.value.description}
+                                    </Text>
+                                )}
+                                <Text size="xs" mt="xs" c="dimmed" style={{ wordBreak: 'break-all' }}>
                                     {doc.value.path}
                                 </Text>
                                 {verifyResult && (
@@ -279,14 +281,15 @@ export default function PublicationDocumentsPage() {
                                         }
                                     </Badge>
                                 )}
-                                <Group mt="md" grow>
-                                    <Button variant="light" color="blue" radius="md" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
+                                <Group justify="flex-end" mt="xl" gap="sm">
+                                    <Button variant="subtle" color="gray" size="sm" radius="xl" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
                                         {t('edit')}
                                     </Button>
                                     <Button
-                                        variant="light"
-                                        color="teal"
-                                        radius="md"
+                                        variant="filled"
+                                        color="dark"
+                                        size="sm"
+                                        radius="xl"
                                         loading={verifyingDocUri === doc.uri}
                                         onClick={() => handleVerifyDocument(doc)}
                                     >

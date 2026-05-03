@@ -1,10 +1,11 @@
 "use client";
 
-import { AppShell, Burger, Group, Title, Menu, ActionIcon, useMantineColorScheme, useComputedColorScheme, Anchor, Button } from '@mantine/core';
+import { AppShell, Burger, Group, Title, Menu, ActionIcon, useMantineColorScheme, useComputedColorScheme, Anchor, Button, Avatar, UnstyledButton, Text, rem } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
-import { IconSun, IconMoon, IconLanguage } from '@tabler/icons-react';
+import { IconSun, IconMoon, IconLanguage, IconLogout, IconChevronDown } from '@tabler/icons-react';
+import { useAuth } from '@/lib/auth-context';
 import { useSyncExternalStore } from 'react';
 import { Footer } from './footer/Footer';
 
@@ -21,6 +22,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     const { setColorScheme } = useMantineColorScheme();
     const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
     const mounted = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getServerMountedSnapshot);
+    const { session, handle, logout } = useAuth();
 
     const switchLocale = (newLocale: 'en' | 'ja') => {
         router.replace(pathname, { locale: newLocale });
@@ -89,6 +91,31 @@ export function Shell({ children }: { children: React.ReactNode }) {
                                     </Menu.Item>
                                 </Menu.Dropdown>
                             </Menu>
+
+                            {session && (
+                                <Menu shadow="md" width={200} position="bottom-end">
+                                    <Menu.Target>
+                                        <UnstyledButton style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Avatar size="sm" color="blue" radius="xl">{handle?.charAt(0).toUpperCase() || 'U'}</Avatar>
+                                            <IconChevronDown size={14} stroke={1.5} />
+                                        </UnstyledButton>
+                                    </Menu.Target>
+                                    <Menu.Dropdown>
+                                        <Menu.Label>Account</Menu.Label>
+                                        <Menu.Item>
+                                            <Text size="sm" fw={500} truncate>{handle || session.info.sub}</Text>
+                                        </Menu.Item>
+                                        <Menu.Divider />
+                                        <Menu.Item
+                                            color="red"
+                                            leftSection={<IconLogout style={{ width: rem(14), height: rem(14) }} />}
+                                            onClick={() => logout()}
+                                        >
+                                            Logout
+                                        </Menu.Item>
+                                    </Menu.Dropdown>
+                                </Menu>
+                            )}
                         </Group>
                     </Group>
 
@@ -117,6 +144,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
                                 <Menu.Item onClick={() => switchLocale('ja')}>日本語</Menu.Item>
                             </Menu.Dropdown>
                         </Menu>
+                        {session && (
+                            <Menu shadow="md" width={200} position="bottom-end">
+                                <Menu.Target>
+                                    <UnstyledButton style={{ display: 'flex', alignItems: 'center' }}>
+                                        <Avatar size="sm" color="blue" radius="xl">{handle?.charAt(0).toUpperCase() || 'U'}</Avatar>
+                                    </UnstyledButton>
+                                </Menu.Target>
+                                <Menu.Dropdown>
+                                    <Menu.Label>Account</Menu.Label>
+                                    <Menu.Item>
+                                        <Text size="sm" fw={500} truncate>{handle || session.info.sub}</Text>
+                                    </Menu.Item>
+                                    <Menu.Divider />
+                                    <Menu.Item
+                                        color="red"
+                                        leftSection={<IconLogout style={{ width: rem(14), height: rem(14) }} />}
+                                        onClick={() => logout()}
+                                    >
+                                        Logout
+                                    </Menu.Item>
+                                </Menu.Dropdown>
+                            </Menu>
+                        )}
                     </Group>
                 </Group>
             </AppShell.Header>
