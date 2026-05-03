@@ -2,6 +2,8 @@
 
 import * as cheerio from 'cheerio';
 import { getWellKnownUrl } from '@/lib/verification';
+import { resolvePds } from '@/lib/pds';
+import { getErrorMessage } from '@/lib/types';
 
 export interface VerificationStep {
     key: string;
@@ -19,6 +21,18 @@ export interface VerificationResult {
     description?: string;
     image?: string;
     steps?: VerificationStep[];
+}
+
+interface RecordResponse<T> {
+    value: T;
+}
+
+interface DocumentRecordValue {
+    site?: string;
+}
+
+interface PublicationRecordValue {
+    url?: string;
 }
 
 export async function verifyDocument(targetUrl: string): Promise<VerificationResult> {
@@ -89,15 +103,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                         addStep('verify_collection', 'success');
 
                         // 3. Resolve PDS
-                        let pds: string | undefined;
-                        try {
-                            const didRes = await fetch(`https://plc.directory/${did}`, { signal: AbortSignal.timeout(5000) });
-                            if (didRes.ok) {
-                                const didDoc = await didRes.json();
-                                const service = didDoc.service?.find((s: any) => s.id === '#atproto_pds' || s.type === 'AtprotoPersonalDataServer');
-                                pds = service?.serviceEndpoint;
-                            }
-                        } catch (e) { }
+                        const pds = await resolvePds(did);
 
                         if (!pds) {
                             addStep('resolve_pds', 'failure');
@@ -112,7 +118,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                             if (!recordRes.ok) {
                                 addStep('fetch_record', 'failure', { status: String(recordRes.status) });
                             } else {
-                                const recordData = await recordRes.json();
+                                const recordData = await recordRes.json() as RecordResponse<DocumentRecordValue>;
                                 const document = recordData.value;
                                 addStep('fetch_record', 'success');
 
@@ -131,14 +137,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                     // Resolve PDS for publication (might be different repo)
                                     let pubPds = pds; // Optimistic same PDS
                                     if (pubDid !== did) {
-                                        try {
-                                            const pubDidRes = await fetch(`https://plc.directory/${pubDid}`, { signal: AbortSignal.timeout(5000) });
-                                            if (pubDidRes.ok) {
-                                                const pubDidDoc = await pubDidRes.json();
-                                                const service = pubDidDoc.service?.find((s: any) => s.id === '#atproto_pds' || s.type === 'AtprotoPersonalDataServer');
-                                                pubPds = service?.serviceEndpoint;
-                                            }
-                                        } catch (e) { }
+                                        pubPds = await resolvePds(pubDid);
                                     }
 
                                     if (!pubPds) {
@@ -152,7 +151,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                         if (!pubRecordRes.ok) {
                                             addStep('fetch_pub_record', 'failure');
                                         } else {
-                                            const pubRecordData = await pubRecordRes.json();
+                                            const pubRecordData = await pubRecordRes.json() as RecordResponse<PublicationRecordValue>;
                                             const publication = pubRecordData.value;
                                             addStep('fetch_pub_record', 'success');
                                             const siteUrl = publication.url;
@@ -179,7 +178,7 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                                                             fullyVerified = true;
                                                         }
                                                     }
-                                                } catch (e) {
+                                                } catch {
                                                     addStep('fetch_wellknown', 'failure');
                                                 }
                                             }
@@ -191,8 +190,8 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
                     }
                 }
             }
-        } catch (protocolErr: any) {
-            addStep('fetch_page', 'failure', { detail: protocolErr.message || 'Unknown protocol error' });
+        } catch (protocolErr) {
+            addStep('fetch_page', 'failure', { detail: getErrorMessage(protocolErr, 'Unknown protocol error') });
         }
 
         return {
@@ -206,8 +205,8 @@ export async function verifyDocument(targetUrl: string): Promise<VerificationRes
             image,
             steps
         };
-    } catch (err: any) {
-        addStep('fetch_page', 'failure', { detail: err.message || 'Unknown error' });
+    } catch (err) {
+        addStep('fetch_page', 'failure', { detail: getErrorMessage(err) });
         return { success: false, steps };
     }
 }

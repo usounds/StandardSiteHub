@@ -26,7 +26,7 @@ export default function EditSitePage() {
     useEffect(() => {
         if (isLoading) return;
         if (!session || !agent) {
-            setLoading(false);
+            queueMicrotask(() => setLoading(false));
             return;
         }
 
@@ -61,7 +61,7 @@ export default function EditSitePage() {
                 setLoading(false);
             }
         }
-        fetchSite();
+        queueMicrotask(() => void fetchSite());
     }, [agent, session, isLoading, rkey]);
 
     const handleSubmit = async (values: SiteFormValues) => {
@@ -77,7 +77,7 @@ export default function EditSitePage() {
                     }
                 });
                 if (!uploaded.ok || !uploaded.data) throw new Error('Failed to upload blob');
-                iconBlobRef = uploaded.data.blob;
+                iconBlobRef = uploaded.data.blob as SiteStandardPublication['icon'];
             }
 
             const record: SiteStandardPublication = {

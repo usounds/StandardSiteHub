@@ -11,6 +11,8 @@
         "handle_label": "ハンドル",
         "handle_placeholder": "example.bsky.social",
         "login": "ログイン",
+        "authenticating": "認証処理中...",
+        "back_home": "ホームに戻る",
         "welcome": "ようこそ、{handle}さん",
         "description": "既存のブログやウェブサイトを、AT ProtocolのStandard Siteとして簡単に公開・管理するためのツールです。",
         "login_error_title": "ログインエラー",

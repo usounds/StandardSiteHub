@@ -5,8 +5,12 @@ import { useDisclosure } from '@mantine/hooks';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import { IconSun, IconMoon, IconLanguage } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Footer } from './footer/Footer';
+
+const subscribeMounted = () => () => {};
+const getMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
 
 export function Shell({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
@@ -16,11 +20,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { setColorScheme } = useMantineColorScheme();
     const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    const mounted = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getServerMountedSnapshot);
 
     const switchLocale = (newLocale: 'en' | 'ja') => {
         router.replace(pathname, { locale: newLocale });

@@ -28,7 +28,7 @@ export default function NewSitePage() {
                     }
                 });
                 if (!uploaded.ok || !uploaded.data) throw new Error('Failed to upload blob');
-                iconBlobRef = uploaded.data.blob;
+                iconBlobRef = uploaded.data.blob as SiteStandardPublication['icon'];
             }
 
             const record: SiteStandardPublication = {

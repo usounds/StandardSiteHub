@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
-import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, Image, ActionIcon, Modal, Code, Stack, Box } from '@mantine/core';
+import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, ActionIcon, Modal, Code, Stack, Box } from '@mantine/core';
 import NextImage from 'next/image';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/lib/auth-context';
-import { Link, useRouter } from '@/i18n/routing';
+import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { verifyPublicationOwnership, PublicationVerificationResult } from '@/app/actions/verify-publication';
 import { IconTrash } from '@tabler/icons-react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { resolvePds } from '@/lib/pds';
 
 import { getWellKnownUrl } from '@/lib/verification';
 
@@ -22,27 +23,8 @@ interface PublicationRecord {
     value: SiteStandardPublication;
 }
 
-interface ResolvedDidDoc {
-    did: string;
-    handle: string;
-    pds: string;
-    signing_key: string;
-}
-
-async function resolvePds(did: string): Promise<string> {
-    try {
-        const res = await fetch(`https://slingshot.microcosm.blue/xrpc/blue.microcosm.identity.resolveMiniDoc?identifier=${did}`, {
-            // cache resolution for 1 hour
-            next: { revalidate: 3600 },
-        });
-        if (res.ok) {
-            const data = await res.json() as ResolvedDidDoc;
-            return data.pds;
-        }
-    } catch (e) {
-        console.error('Failed to resolve PDS for', did, e);
-    }
-    return 'https://bsky.social'; // Fallback
+interface ListRecordsResponse {
+    records?: PublicationRecord[];
 }
 
 function getBlobUrl(pds: string, did: string, cid: string): string {
@@ -67,13 +49,14 @@ export default function PublicationsPage() {
         }
         try {
             setLoading(true);
-            const result = await agent!.get('com.atproto.repo.listRecords', {
+            const result = await agent.get('com.atproto.repo.listRecords', {
                 params: {
-                    repo: session!.info.sub,
+                    repo: session.info.sub,
                     collection: 'site.standard.publication',
                 }
             });
-            const records = (result.data as any).records as unknown as PublicationRecord[];
+            const data = result.data as ListRecordsResponse;
+            const records = data.records ?? [];
             setPublications(records);
 
             // Verify all publications in parallel
@@ -102,7 +85,7 @@ export default function PublicationsPage() {
 
     useEffect(() => {
         if (isLoading) return;
-        fetchPublications();
+        queueMicrotask(() => void fetchPublications());
     }, [isLoading, fetchPublications]);
 
     const handleDownloadVerificationFile = useCallback((atUri: string) => {
@@ -126,7 +109,7 @@ export default function PublicationsPage() {
         const rkey = parts[4];
 
         try {
-            await agent.post('com.atproto.repo.applyWrites' as any, {
+            await agent.post('com.atproto.repo.applyWrites', {
                 input: {
                     repo: session.info.sub,
                     writes: [{
@@ -181,7 +164,7 @@ export default function PublicationsPage() {
                         const verification = verificationStatus[pub.uri];
                         const isVerifying = verifying[pub.uri];
 
-                        const iconRef = (pub.value.icon as any)?.ref?.$link;
+                        const iconRef = pub.value.icon?.ref?.$link;
                         const did = pub.uri.split('/')[2]; // at://did:plc:xxx/collection/rkey
 
                         return (

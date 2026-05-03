@@ -14,8 +14,6 @@ export interface IconData {
     mimeType: string;
 }
 
-const VALID_URL_REGEX = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(\/.*)?$/i;
-
 function normalizeUrl(url: string): string | null {
     if (!url) return null;
     let target = url.trim();

@@ -1,6 +1,7 @@
 "use server";
 
 import { getWellKnownUrl } from '@/lib/verification';
+import { getErrorMessage } from '@/lib/types';
 
 export interface PublicationVerificationResult {
     verified: boolean;
@@ -42,11 +43,11 @@ export async function verifyPublicationOwnership(
             expectedUri: expectedAtUri,
             actualUri,
         };
-    } catch (err: any) {
+    } catch (err) {
         return {
             verified: false,
             expectedUri: expectedAtUri,
-            error: err?.message || 'Unknown error',
+            error: getErrorMessage(err),
         };
     }
 }

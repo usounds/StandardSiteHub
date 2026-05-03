@@ -31,7 +31,7 @@ export default function EditArticlePage() {
     useEffect(() => {
         if (isLoading) return;
         if (!session || !agent) {
-            setLoading(false);
+            queueMicrotask(() => setLoading(false));
             return;
         }
 
@@ -49,7 +49,7 @@ export default function EditArticlePage() {
                 if (!pubRes.ok || !pubRes.data) throw new Error('Failed to fetch publication');
 
                 const pubValue = pubRes.data.value as SiteStandardPublication;
-                const pubUri = pubRes.data.uri;
+                const pubUri = String(pubRes.data.uri);
                 setPublication({ uri: pubUri, value: pubValue });
 
                 // Fetch Document
@@ -87,7 +87,7 @@ export default function EditArticlePage() {
                 setLoading(false);
             }
         }
-        init();
+        queueMicrotask(() => void init());
     }, [agent, session, isLoading, pubRkey, articleRkey]);
 
     const handleSubmit = async (values: FormValues) => {
@@ -105,7 +105,7 @@ export default function EditArticlePage() {
                 });
 
                 if (!res.ok || !res.data) throw new Error('Failed to upload blob');
-                coverImageBlob = res.data.blob;
+                coverImageBlob = res.data.blob as SiteStandardDocument['coverImage'];
             }
 
             const documentRecord: SiteStandardDocument = {

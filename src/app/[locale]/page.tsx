@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Title, Text, Button, Group, Stack, Center, rem, Paper } from '@mantine/core';
+import { Container, Title, Text, Button, Stack, Center, rem, Paper } from '@mantine/core';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/routing';

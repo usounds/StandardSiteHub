@@ -11,6 +11,8 @@
     "handle_label": "Handle",
     "handle_placeholder": "example.bsky.social",
     "login": "Login",
+    "authenticating": "Authenticating...",
+    "back_home": "Back home",
     "welcome": "Welcome, {handle}",
     "description": "Seamlessly publish and manage your existing blog content as an AT Protocol Standard Site.",
     "login_error_title": "Login Error",

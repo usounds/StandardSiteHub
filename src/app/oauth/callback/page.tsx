@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { configureOAuth, finalizeAuthorization } from '@atcute/oauth-browser-client';
+import { finalizeAuthorization } from '@atcute/oauth-browser-client';
 import { Text, Container, Loader, Center, Stack, Button } from '@mantine/core';
-import { identityResolver } from '@/lib/resolvers';
+import { getErrorMessage } from '@/lib/types';
+import { POST_OAUTH_RETURN_TO_STORAGE_KEY, normalizeReturnTo } from '@/lib/atpassport';
+import { configureAtprotoOAuth } from '@/lib/oauth';
 
 export default function OAuthCallback() {
     const router = useRouter();
@@ -19,14 +21,7 @@ export default function OAuthCallback() {
             try {
                 // コールバックページでも configureOAuth を呼ぶ
                 // （AuthProviderのuseEffectより先にfinalizeAuthorizationが呼ばれる場合があるため）
-                const origin = window.location.origin;
-                configureOAuth({
-                    metadata: {
-                        client_id: `${origin}/client-metadata.json`,
-                        redirect_uri: `${origin}/oauth/callback`,
-                    },
-                    identityResolver: identityResolver,
-                });
+                configureAtprotoOAuth();
 
                 // OAuthレスポンスはハッシュフラグメント(#)またはクエリパラメータ(?)で返される
                 const hash = window.location.hash.substring(1);
@@ -51,13 +46,18 @@ export default function OAuthCallback() {
                 // アクティブセッションとして保存
                 localStorage.setItem('last_active_did', session.info.sub);
 
-                // ホームにリダイレクト
-                router.push('/');
-            } catch (err: any) {
+                const returnTo = normalizeReturnTo(
+                    sessionStorage.getItem(POST_OAUTH_RETURN_TO_STORAGE_KEY) ?? undefined,
+                    '/'
+                );
+                sessionStorage.removeItem(POST_OAUTH_RETURN_TO_STORAGE_KEY);
+
+                router.push(returnTo);
+            } catch (err) {
                 console.error('OAuth Callback Error:', err);
                 setErrorState({
                     title: '認証エラー',
-                    message: err.message || '認証処理中に予期せぬエラーが発生しました。'
+                    message: getErrorMessage(err, '認証処理中に予期せぬエラーが発生しました。')
                 });
             }
         }

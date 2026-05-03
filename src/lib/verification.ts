@@ -10,7 +10,7 @@ export function getWellKnownUrl(siteUrl: string): string {
         }
 
         return `${origin}/.well-known/site.standard.publication/${path}`;
-    } catch (err) {
+    } catch {
         console.error('Invalid URL for well-known construction:', siteUrl);
         return siteUrl; // Fallback
     }

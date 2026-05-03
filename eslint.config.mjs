@@ -9,6 +9,11 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".open-next/**",
+    ".sst/**",
+    ".serena/**",
+    "src/lib/lexicons/types/**",
+    "sst-env.d.ts",
     "out/**",
     "build/**",
     "next-env.d.ts",

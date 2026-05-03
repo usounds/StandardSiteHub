@@ -38,7 +38,7 @@ export default function NewArticlePage() {
                 });
 
                 if (!res.ok || !res.data) throw new Error('Failed to upload blob');
-                coverImageBlob = res.data.blob;
+                coverImageBlob = res.data.blob as SiteStandardDocument['coverImage'];
             }
 
             const pubRes = await agent.get('com.atproto.repo.getRecord', {
@@ -62,7 +62,7 @@ export default function NewArticlePage() {
                 throw new Error('Invalid publication record');
             }
 
-            const pubUri = pubRes.data.uri;
+            const pubUri = String(pubRes.data.uri);
 
             const documentRecord: SiteStandardDocument = {
                 $type: 'site.standard.document',

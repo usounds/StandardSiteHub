@@ -21,7 +21,7 @@ interface SiteFormProps {
     onSubmit: (values: SiteFormValues) => Promise<void>;
     isSubmitting: boolean;
     mode: 'create' | 'edit';
-    existingIcon?: any;
+    existingIcon?: unknown;
 }
 
 export function SiteForm({ initialValues, onSubmit, isSubmitting, mode, existingIcon }: SiteFormProps) {

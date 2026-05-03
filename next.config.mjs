@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // Add other Next.js config here if needed
+    allowedDevOrigins: ['192.168.11.7'],
     serverExternalPackages: [
         '@atcute/client',
         '@atcute/tid',
@@ -21,6 +22,7 @@ const nextConfig = {
             bodySizeLimit: '5mb',
         },
     },
+    
     images: {
         dangerouslyAllowSVG: true,
         contentDispositionType: 'attachment',

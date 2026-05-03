@@ -6,7 +6,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { IconTrash, IconCheck, IconX, IconCircleCheck, IconCircleX, IconClock } from '@tabler/icons-react';
 import { useAuth } from '@/lib/auth-context';
-import { Link, useRouter } from '@/i18n/routing';
+import { Link } from '@/i18n/routing';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { SiteStandardDocument } from '@/lib/lexicons/site-standard-document';
 import { useParams } from 'next/navigation';
@@ -19,6 +19,16 @@ interface DocumentRecord {
     uri: string;
     cid: string;
     value: SiteStandardDocument;
+}
+
+interface GetPublicationResponse {
+    uri: string;
+    value: SiteStandardPublication;
+}
+
+interface ListDocumentsResponse {
+    cursor?: string;
+    records?: DocumentRecord[];
 }
 
 export default function PublicationDocumentsPage() {
@@ -42,7 +52,7 @@ export default function PublicationDocumentsPage() {
     useEffect(() => {
         if (isLoading) return;
         if (!session || !agent) {
-            setLoading(false);
+            queueMicrotask(() => setLoading(false));
             return;
         }
 
@@ -55,8 +65,9 @@ export default function PublicationDocumentsPage() {
                         rkey: rkey,
                     }
                 });
-                const pubData = (pubRes.data as any).value as unknown as SiteStandardPublication;
-                const pubUri = (pubRes.data as any).uri;
+                const pubRecord = pubRes.data as unknown as GetPublicationResponse;
+                const pubData = pubRecord.value;
+                const pubUri = pubRecord.uri;
                 setPublication(pubData);
 
                 if (pubData.url) {
@@ -78,9 +89,10 @@ export default function PublicationDocumentsPage() {
                         }
                     });
 
-                    const records = (docRes.data as any).records as unknown as DocumentRecord[];
+                    const data = docRes.data as unknown as ListDocumentsResponse;
+                    const records = data.records ?? [];
                     allDocs = [...allDocs, ...records];
-                    cursor = (docRes.data as any).cursor;
+                    cursor = data.cursor;
                 } while (cursor);
 
                 const validDocs = allDocs.filter(doc => {
@@ -93,7 +105,7 @@ export default function PublicationDocumentsPage() {
                 setLoading(false);
             }
         }
-        fetchData();
+        queueMicrotask(() => void fetchData());
     }, [agent, session, isLoading, rkey]);
 
     const handleVerifyDocument = async (doc: DocumentRecord) => {
@@ -167,11 +179,11 @@ export default function PublicationDocumentsPage() {
     };
 
     const translateStepName = (key: string) => {
-        const tKey = `step_${key}` as any;
+        const tKey = `step_${key}` as Parameters<typeof t>[0];
         try { return t(tKey); } catch { return key; }
     };
     const translateStepMessage = (key: string, status: string, params?: Record<string, string>) => {
-        const tKey = `step_${key}_${status}` as any;
+        const tKey = `step_${key}_${status}` as Parameters<typeof t>[0];
         try { return t(tKey, params); } catch { return params ? Object.values(params).join(', ') : ''; }
     };
 

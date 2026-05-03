@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import {
-    configureOAuth,
     createAuthorizationUrl,
     getSession,
     listStoredSessions,
@@ -11,11 +10,13 @@ import {
     type Session
 } from '@atcute/oauth-browser-client';
 import { Client } from '@atcute/client';
-import { identityResolver } from './resolvers';
+import type { ActorIdentifier } from '@atcute/lexicons';
+import type { AtpClient, Did } from './types';
+import { configureAtprotoOAuth } from './oauth';
 
 interface AuthContextType {
     session: Session | undefined;
-    agent: Client<any, any> | undefined;
+    agent: AtpClient | undefined;
     handle: string | undefined;
     isLoading: boolean;
     login: (handle: string) => Promise<void>;
@@ -26,7 +27,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | undefined>(undefined);
-    const [agent, setAgent] = useState<Client<any, any> | undefined>(undefined);
+    const [agent, setAgent] = useState<AtpClient | undefined>(undefined);
     const [handle, setHandle] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [isConfigured, setIsConfigured] = useState(false);
@@ -34,22 +35,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const origin = window.location.origin;
-        configureOAuth({
-            metadata: {
-                client_id: `${origin}/client-metadata.json`,
-                redirect_uri: `${origin}/oauth/callback`,
-            },
-            identityResolver: identityResolver,
-        });
-        setIsConfigured(true);
+        configureAtprotoOAuth();
+        queueMicrotask(() => setIsConfigured(true));
     }, []);
 
     const fetchHandle = useCallback(async (did: string) => {
         try {
             const response = await fetch(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${did}`);
             if (response.ok) {
-                const data = await response.json();
+                const data = await response.json() as { handle?: string };
                 setHandle(data.handle);
             }
         } catch (err) {
@@ -66,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 did = stored[0];
             }
 
-            if (did && stored.includes(did as any)) {
-                const sess = await getSession(did as any);
+            if (did && stored.includes(did as Did)) {
+                const sess = await getSession(did as Did);
                 setSession(sess);
 
-                const newAgent = new Client<any, any>({
+                const newAgent = new Client({
                     handler: new OAuthUserAgent(sess),
-                });
+                }) as unknown as AtpClient;
                 setAgent(newAgent);
 
                 // Fetch handle before finishing loading
@@ -87,13 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (isConfigured) {
-            restoreSession();
+            queueMicrotask(() => void restoreSession());
         }
     }, [isConfigured, restoreSession]);
 
     const login = async (handle: string) => {
+        configureAtprotoOAuth();
+
         const url = await createAuthorizationUrl({
-            target: { type: 'account', identifier: handle as any },
+            target: { type: 'account', identifier: handle as ActorIdentifier },
             scope: 'atproto include:site.standard.authFull blob:*/*',
         });
 

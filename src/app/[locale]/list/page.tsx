@@ -1,10 +1,11 @@
-import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Button, Group, Image, Box } from '@mantine/core';
+import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Group, Box } from '@mantine/core';
 import NextImage from 'next/image';
 import { IconWorld } from '@tabler/icons-react';
 import classes from './ListCard.module.css';
 import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getWellKnownUrl } from '@/lib/verification';
+import { resolvePdsMap } from '@/lib/pds';
 
 export const revalidate = 60;
 export const dynamic = 'force-static';
@@ -38,29 +39,6 @@ interface PublicationApiRecord {
     time_us: number;
 }
 
-
-interface ResolvedDidDoc {
-    did: string;
-    handle: string;
-    pds: string;
-    signing_key: string;
-}
-
-async function resolvePds(did: string): Promise<string> {
-    try {
-        const res = await fetch(`https://slingshot.microcosm.blue/xrpc/blue.microcosm.identity.resolveMiniDoc?identifier=${did}`, {
-            next: { revalidate: 3600 }, // Cache resolution for 1 hour
-            signal: AbortSignal.timeout(5000),
-        });
-        if (res.ok) {
-            const data = await res.json() as ResolvedDidDoc;
-            return data.pds;
-        }
-    } catch (e) {
-        console.error('Failed to resolve PDS for', did, e);
-    }
-    return 'https://bsky.social'; // Fallback
-}
 
 function getBlobUrl(pds: string, did: string, cid: string): string {
     return `${pds}/xrpc/com.atproto.sync.getBlob?did=${encodeURIComponent(did)}&cid=${encodeURIComponent(cid)}`;
@@ -104,7 +82,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
     }
 
     // Build AT URIs and verify in parallel
-    const [verificationResults, pdsResults] = await Promise.all([
+    const [verificationResults, pdsMap] = await Promise.all([
         Promise.allSettled(
             records.map(async (rec) => {
                 const atUri = `at://${rec.did}/${rec.collection}/${rec.rkey}`;
@@ -113,7 +91,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
                 return { atUri, ...result };
             })
         ),
-        Promise.allSettled(records.map(rec => resolvePds(rec.did)))
+        resolvePdsMap(records.map((rec) => rec.did))
     ]);
 
     const verificationMap: Record<string, { verified: boolean, reason?: string }> = {};
@@ -123,15 +101,6 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
                 verified: result.value.verified,
                 reason: result.value.reason
             };
-        }
-    });
-
-    const pdsMap: Record<string, string> = {};
-    pdsResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-            pdsMap[records[index].did] = result.value;
-        } else {
-            pdsMap[records[index].did] = 'https://bsky.social';
         }
     });
 
@@ -154,8 +123,6 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
                         const verification = verificationMap[key] ?? { verified: false, reason: 'unverified_reason_network' };
                         const isVerified = verification.verified;
                         const iconRef = rec.record.icon?.ref?.$link;
-                        const atUri = `at://${rec.did}/${rec.collection}/${rec.rkey}`;
-
                         return (
                             <Card key={key} shadow="sm" padding="lg" radius="lg" withBorder component="a" href={rec.record.url || '#'} target="_blank" rel="noopener noreferrer" className={classes.card}>
                                 <Box mx="calc(var(--card-padding) * -1)" mt="calc(var(--card-padding) * -1)">

@@ -41,8 +41,8 @@ async function resizeImageToFit(base64: string, mimeType: string, maxSizeBytes: 
         const img = new window.Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
+            const width = img.width;
+            const height = img.height;
 
             // Scale down if needed (try multiple quality levels first, then scale)
             const tryEncode = (scale: number, quality: number): Blob | null => {
@@ -95,11 +95,11 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
     const tStep = useTranslations('SiteDetail');
 
     const translateStepName = (key: string) => {
-        const tKey = `step_${key}` as any;
+        const tKey = `step_${key}` as Parameters<typeof tStep>[0];
         try { return tStep(tKey); } catch { return key; }
     };
     const translateStepMessage = (key: string, status: string, params?: Record<string, string>) => {
-        const tKey = `step_${key}_${status}` as any;
+        const tKey = `step_${key}_${status}` as Parameters<typeof tStep>[0];
         try { return tStep(tKey, params); } catch { return params ? Object.values(params).join(', ') : ''; }
     };
     const [verifying, setVerifying] = useState(false);

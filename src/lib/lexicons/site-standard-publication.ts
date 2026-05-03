@@ -4,7 +4,7 @@ import { z } from 'zod';
 // strictly speaking we should import it if available, but for now we'll define a compatible schema.
 const blobRefSchema = z.object({
     $type: z.literal('blob'),
-    ref: z.any(), // cid
+    ref: z.object({ $link: z.string() }), // cid
     mimeType: z.string(),
     size: z.number()
 });
