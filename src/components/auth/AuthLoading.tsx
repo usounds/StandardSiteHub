@@ -7,7 +7,7 @@ export function AuthLoading({ message = '認証処理中...' }: { message?: stri
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        queueMicrotask(() => setMounted(true));
     }, []);
 
     return (
@@ -16,21 +16,17 @@ export function AuthLoading({ message = '認証処理中...' }: { message?: stri
                 <Transition mounted={mounted} transition="pop" duration={400} timingFunction="ease">
                     {(styles) => (
                         <Paper
+                            className="app-panel"
                             style={{
                                 ...styles,
-                                background: 'var(--mantine-color-body)',
-                                border: '1px solid var(--mantine-color-default-border)',
-                                backdropFilter: 'blur(10px)',
-                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
                             }}
-                            shadow="xl"
-                            radius="lg"
+                            radius="md"
                             p="xl"
                             w={320}
                         >
                             <Stack align="center" gap="lg">
                                 <div style={{ position: 'relative' }}>
-                                    <Loader size="xl" type="bars" color="dark" />
+                                    <Loader size="xl" type="bars" />
                                 </div>
                                 <Text fw={800} size="lg" ta="center" c="var(--mantine-color-text)">
                                     {message}

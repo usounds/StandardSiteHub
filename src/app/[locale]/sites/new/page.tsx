@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from 'react';
-import { Container, Title } from '@mantine/core';
+import { Container } from '@mantine/core';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
 import { SiteForm, SiteFormValues } from '@/components/sites/SiteForm';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function NewSitePage() {
-    const t = useTranslations('NewSite');
     const { agent, session } = useAuth();
     const router = useRouter();
     const [submitting, setSubmitting] = useState(false);
@@ -65,8 +63,7 @@ export default function NewSitePage() {
 
     return (
         <AuthGuard>
-            <Container size="sm" py="xl">
-                <Title mb="lg">{t('title')}</Title>
+            <Container size="sm" py={{ base: 'lg', sm: 'xl' }} className="app-page">
                 <SiteForm
                     initialValues={{
                         url: '',

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from 'react';
-import { Stack, Text, Autocomplete, Button, Group, Avatar, Paper, ComboboxItem, Divider } from '@mantine/core';
+import { Stack, Text, Autocomplete, Button, Group, Avatar, Paper, ComboboxItem, Divider, ThemeIcon } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { AtPassportIcon, AtPassportUI } from '@atpassport/client/ui';
-import { ATPASSPORT_STATE_STORAGE_KEY, POST_OAUTH_RETURN_TO_STORAGE_KEY, createAtPassportClient, getCurrentReturnTo, getAtPassportLocale } from '@/lib/atpassport';
+import { POST_OAUTH_RETURN_TO_STORAGE_KEY, createAtPassportClient, getCurrentReturnTo, getAtPassportLocale, setAtPassportState } from '@/lib/atpassport';
+import { IconAt, IconLogin2 } from '@tabler/icons-react';
 
 interface ActorSuggestion {
     handle: string;
@@ -63,7 +64,7 @@ export function LoginPanel() {
                 returnTo,
             });
 
-            sessionStorage.setItem(ATPASSPORT_STATE_STORAGE_KEY, atpstate);
+            setAtPassportState(atpstate);
             window.location.href = url;
         } catch (error) {
             console.error(error);
@@ -100,48 +101,44 @@ export function LoginPanel() {
     return (
         <Paper
             withBorder
-            shadow="xl"
-            p={40}
-            radius="lg"
+            className="app-panel app-login-panel"
+            p={{ base: 'lg', sm: 32 }}
+            radius="md"
             w="100%"
-            maw={420}
+            maw={390}
             mx="auto"
-            style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(10px)',
-            }}
         >
             <Stack gap="lg">
-                <div>
-                    <Text size="xl" fw={800} ta="center" c="var(--mantine-color-text)" letterSpacing="-0.5px">
-                        Welcome Back
+                <Stack gap="xs" align="center">
+                    <ThemeIcon size={46} radius="xl" color="brand" variant="light">
+                        <IconLogin2 size={24} />
+                    </ThemeIcon>
+                    <Text size="xl" fw={850} ta="center" c="var(--mantine-color-text)" lh={1.2}>
+                        {t('login_title')}
                     </Text>
-                    <Text c="dimmed" size="sm" ta="center" mt="xs">
+                    <Text c="var(--app-text-muted)" size="sm" ta="center" mt={2}>
                         {t('login_message')}
                     </Text>
-                </div>
+                </Stack>
 
                 <Button
                     onClick={handleAtPassportLogin}
                     fullWidth
                     size="md"
-                    radius="md"
-                    variant="default"
                     loading={isAtPassportLoading}
                     leftSection={<AtPassportIcon size={22} />}
-                    style={{ transition: 'all 0.2s ease', '&:hover': { transform: 'translateY(-1px)', boxShadow: 'var(--mantine-shadow-sm)' } }}
                 >
                     {AtPassportUI[getAtPassportLocale(locale)].title}
                 </Button>
 
-                <Divider label="または" labelPosition="center" my="sm" />
+                <Divider label={t('login_divider')} labelPosition="center" my={4} />
 
                 <Stack gap="md">
                     <Autocomplete
                         label={t('handle_label')}
                         placeholder={t('handle_placeholder')}
                         value={loginHandle}
-                        leftSection={<Text c="dimmed">@</Text>}
+                        leftSection={<IconAt size={16} style={{ color: 'var(--app-text-muted)' }} />}
                         data={suggestions}
                         onInput={(event) => handleInput(event.currentTarget.value)}
                         onChange={(value) => {
@@ -158,7 +155,6 @@ export function LoginPanel() {
                             );
                         }}
                         size="md"
-                        radius="md"
                         autoCapitalize="none"
                         autoCorrect="off"
                         autoComplete="off"
@@ -168,11 +164,10 @@ export function LoginPanel() {
                         onClick={handleLogin}
                         fullWidth
                         size="md"
-                        radius="md"
-                        variant="filled"
-                        color="dark"
+                        variant="default"
                         loading={isLoginLoading}
-                        style={{ transition: 'all 0.2s ease', '&:hover': { transform: 'translateY(-1px)', boxShadow: 'var(--mantine-shadow-md)' } }}
+                        leftSection={<IconAt size={16} />}
+                        data-login-secondary
                     >
                         {t('login')}
                     </Button>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Breadcrumbs, Anchor, ActionIcon, Badge, Tooltip, Modal, Stack, ThemeIcon, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconTrash, IconCheck, IconX, IconCircleCheck, IconCircleX, IconClock } from '@tabler/icons-react';
+import { IconTrash, IconCheck, IconX, IconCircleCheck, IconCircleX, IconClock, IconPlus, IconFileText } from '@tabler/icons-react';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/routing';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
@@ -217,36 +217,44 @@ export default function PublicationDocumentsPage() {
 
     return (
         <AuthGuard>
-            <Container size="lg" py="xl">
+            <Container size="lg" py={{ base: 'lg', sm: 'xl' }} className="app-page">
                 <Breadcrumbs mb="lg">{items}</Breadcrumbs>
 
-                <Group justify="space-between" mb="lg">
-                    <Group>
+                <Group className="app-page-header">
+                    <Group align="center">
                         <Title order={2}>{t('articles_for', { name: publication.name })}</Title>
                         {isVerified && (
                             <Tooltip label={t('verified_site_tooltip') || "Verified Site"}>
-                                <Badge color="green" leftSection={<IconCheck size={12} />}>
+                                <Badge color="green" variant="light" leftSection={<IconCheck size={12} />}>
                                     {t('verified') || "Verified"}
                                 </Badge>
                             </Tooltip>
                         )}
                     </Group>
-                    <Button variant="filled" color="dark" radius="md" component={Link} href={`/sites/${rkey}/articles/new`}>{t('add_article')}</Button>
+                    <Button leftSection={<IconPlus size={18} />} component={Link} href={`/sites/${rkey}/articles/new`}>{t('add_article')}</Button>
                 </Group>
 
-                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+                {documents.length === 0 ? (
+                    <Center className="app-empty-state">
+                        <Stack gap="xs" align="center">
+                            <IconFileText size={28} style={{ color: 'var(--app-text-muted)' }} />
+                            <Text fw={700}>{t('add_article')}</Text>
+                            <Text c="dimmed" size="sm" ta="center">{t('empty_articles')}</Text>
+                        </Stack>
+                    </Center>
+                ) : (
+                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
                     {documents.map((doc) => {
                         const verifyResult = docVerifyResults[doc.uri];
                         return (
-                            <Card key={doc.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <Card key={doc.uri} padding="lg" className="app-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 <Group justify="space-between" align="flex-start" wrap="nowrap" mb="xs">
-                                    <Text fw={700} size="lg" lineClamp={2} style={{ flex: 1 }}>
+                                    <Text fw={750} size="lg" lineClamp={2} style={{ flex: 1, lineHeight: 1.25 }}>
                                         {doc.value.title || doc.value.path}
                                     </Text>
                                     <ActionIcon
                                         variant="subtle"
                                         color="red"
-                                        radius="xl"
                                         onClick={() => handleDeleteDocument(doc.uri)}
                                         title={t('delete_article')}
                                     >
@@ -282,14 +290,12 @@ export default function PublicationDocumentsPage() {
                                     </Badge>
                                 )}
                                 <Group justify="flex-end" mt="auto" pt="xl" gap="sm">
-                                    <Button variant="subtle" color="gray" size="sm" radius="xl" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
+                                    <Button variant="default" color="gray" size="sm" component={Link} href={`/sites/${rkey}/articles/${doc.uri.split('/').pop()}/edit`}>
                                         {t('edit')}
                                     </Button>
                                     <Button
                                         variant="filled"
-                                        color="dark"
                                         size="sm"
-                                        radius="xl"
                                         loading={verifyingDocUri === doc.uri}
                                         onClick={() => handleVerifyDocument(doc)}
                                     >
@@ -300,6 +306,7 @@ export default function PublicationDocumentsPage() {
                         );
                     })}
                 </SimpleGrid>
+                )}
 
                 {/* Verification Result Modal */}
                 <Modal
@@ -323,9 +330,9 @@ export default function PublicationDocumentsPage() {
                     {modalTitle && (
                         <Text size="sm" c="dimmed" mb="md">{modalTitle}</Text>
                     )}
-                    <Stack gap="xs">
+                    <Stack gap="sm">
                         {modalResult?.steps?.map((step, index) => (
-                            <Box key={index}>
+                            <Box key={index} className="app-muted-panel" p="sm" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
                                 <Group gap="xs" wrap="nowrap">
                                     {getStepIcon(step.status)}
                                     <Text size="sm" fw={500}>{translateStepName(step.key)}</Text>

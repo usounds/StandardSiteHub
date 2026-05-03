@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Container, Title, Loader, Center, Text } from '@mantine/core';
+import { Container, Loader, Center, Text } from '@mantine/core';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from '@/i18n/routing';
 import { useParams } from 'next/navigation';
@@ -122,8 +122,7 @@ export default function EditSitePage() {
 
     return (
         <AuthGuard>
-            <Container size="sm" py="xl">
-                <Title mb="lg">{t('title')}</Title>
+            <Container size="sm" py={{ base: 'lg', sm: 'xl' }} className="app-page">
                 <SiteForm
                     initialValues={initialValues}
                     onSubmit={handleSubmit}

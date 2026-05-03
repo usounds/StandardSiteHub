@@ -1,6 +1,6 @@
-import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Group, Box } from '@mantine/core';
+import { Container, Title, Text, SimpleGrid, Card, Center, Badge, Tooltip, Group, Box, Stack } from '@mantine/core';
 import NextImage from 'next/image';
-import { IconWorld } from '@tabler/icons-react';
+import { IconWorld, IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react';
 import classes from './ListCard.module.css';
 import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
@@ -105,29 +105,31 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
     });
 
     return (
-        <Container size="lg" py="xl">
-            <Group justify="space-between" mb="xs">
-                <Title>{t('title')}</Title>
+        <Container size="lg" py={{ base: 'lg', sm: 'xl' }} className="app-page">
+            <Group className="app-page-header">
+                <Stack gap={4}>
+                    <Title order={1}>{t('title')}</Title>
+                    <Text size="sm" c="dimmed">{t('description')}</Text>
+                </Stack>
                 <Badge variant="light" size="lg">{t('total_sites', { count: records.length })}</Badge>
             </Group>
-            <Text size="sm" c="dimmed" mb="lg">{t('description')}</Text>
 
             {records.length === 0 ? (
-                <Center h="200">
+                <Center className="app-empty-state">
                     <Text c="dimmed">{t('no_sites')}</Text>
                 </Center>
             ) : (
-                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
                     {records.map((rec) => {
                         const key = rec.did + '/' + rec.rkey;
                         const verification = verificationMap[key] ?? { verified: false, reason: 'unverified_reason_network' };
                         const isVerified = verification.verified;
                         const iconRef = rec.record.icon?.ref?.$link;
                         return (
-                            <Card key={key} shadow="sm" padding="lg" radius="lg" withBorder component="a" href={rec.record.url || '#'} target="_blank" rel="noopener noreferrer" className={classes.card}>
+                            <Card key={key} padding="lg" component="a" href={rec.record.url || '#'} target="_blank" rel="noopener noreferrer" className={`${classes.card} app-card`}>
                                 <Box mx="calc(var(--card-padding) * -1)" mt="calc(var(--card-padding) * -1)">
                                     {iconRef ? (
-                                        <Box h={160} w="100%" pos="relative" bg="gray.1" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
+                                        <Box h={156} w="100%" pos="relative" bg="var(--app-surface-subtle)" style={{ borderBottom: '1px solid var(--app-border)' }}>
                                             <NextImage
                                                 src={getBlobUrl(pdsMap[rec.did], rec.did, iconRef)}
                                                 alt={rec.record.name}
@@ -138,7 +140,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
                                             />
                                         </Box>
                                     ) : (
-                                        <Center h={160} bg="gray.1" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
+                                        <Center h={156} bg="var(--app-surface-subtle)" style={{ borderBottom: '1px solid var(--app-border)' }}>
                                             <Text c="dimmed">{t('icon')}</Text>
                                         </Center>
                                     )}
@@ -161,20 +163,20 @@ export default async function PublicListPage({ params }: { params: Promise<{ loc
                                     )}
 
                                     <Group justify="space-between" align="flex-start" wrap="nowrap">
-                                        <Text fw={600} size="lg" lineClamp={2} style={{ flex: 1, lineHeight: 1.3 }}>
-                                            {rec.record.name}
-                                        </Text>
-                                        {isVerified ? (
-                                            <Tooltip label={t('verified_tooltip')}>
-                                                <Badge color="green" variant="light" size="sm" leftSection="✓" style={{ flexShrink: 0 }}>
-                                                    {t('verified')}
-                                                </Badge>
-                                            </Tooltip>
-                                        ) : (
-                                            <Tooltip label={verification.reason ? t(verification.reason) : t('unverified_tooltip')}>
-                                                <Badge color="gray" variant="light" size="sm" style={{ flexShrink: 0 }}>
-                                                    {t('unverified')}
-                                                </Badge>
+                                            <Text fw={750} size="lg" lineClamp={2} style={{ flex: 1, lineHeight: 1.25 }}>
+                                                {rec.record.name}
+                                            </Text>
+                                            {isVerified ? (
+                                                <Tooltip label={t('verified_tooltip')}>
+                                                    <Badge color="green" variant="light" size="sm" leftSection={<IconShieldCheck size={12} />} style={{ flexShrink: 0 }}>
+                                                        {t('verified')}
+                                                    </Badge>
+                                                </Tooltip>
+                                            ) : (
+                                                <Tooltip label={verification.reason ? t(verification.reason) : t('unverified_tooltip')}>
+                                                    <Badge color="gray" variant="light" size="sm" leftSection={<IconAlertTriangle size={12} />} style={{ flexShrink: 0 }}>
+                                                        {t('unverified')}
+                                                    </Badge>
                                             </Tooltip>
                                         )}
                                     </Group>

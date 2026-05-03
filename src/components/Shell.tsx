@@ -1,17 +1,12 @@
 "use client";
 
-import { AppShell, Burger, Group, Title, Menu, ActionIcon, useMantineColorScheme, useComputedColorScheme, Anchor, Button, Avatar, UnstyledButton, Text, rem } from '@mantine/core';
+import { AppShell, Burger, Group, Menu, ActionIcon, Anchor, Button, Avatar, UnstyledButton, Text, rem, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
-import { IconSun, IconMoon, IconLanguage, IconLogout, IconChevronDown } from '@tabler/icons-react';
+import { IconLanguage, IconLogout, IconChevronDown, IconHome, IconLayoutGrid, IconWorldSearch } from '@tabler/icons-react';
 import { useAuth } from '@/lib/auth-context';
-import { useSyncExternalStore } from 'react';
 import { Footer } from './footer/Footer';
-
-const subscribeMounted = () => () => {};
-const getMountedSnapshot = () => true;
-const getServerMountedSnapshot = () => false;
 
 export function Shell({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
@@ -19,59 +14,98 @@ export function Shell({ children }: { children: React.ReactNode }) {
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
-    const { setColorScheme } = useMantineColorScheme();
-    const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
-    const mounted = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getServerMountedSnapshot);
     const { session, handle, logout } = useAuth();
 
     const switchLocale = (newLocale: 'en' | 'ja') => {
         router.replace(pathname, { locale: newLocale });
     };
 
+    const navItems = [
+        { href: '/', label: t('home'), icon: IconHome },
+        { href: '/sites', label: t('publications'), icon: IconLayoutGrid },
+        { href: '/list', label: t('list'), icon: IconWorldSearch },
+    ];
+
+    const isActive = (href: string) => {
+        if (href === '/') return pathname === '/';
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
+
     return (
         <AppShell
-            header={{ height: 60 }}
+            header={{ height: 64 }}
             navbar={{
                 width: 300,
                 breakpoint: 'sm',
-                collapsed: { mobile: !opened, desktop: true }, // Collapsed on desktop for now as requested just header
+                collapsed: { mobile: !opened, desktop: true },
             }}
-            padding="md"
+            padding={0}
         >
-            <AppShell.Header>
-                <Group h="100%" px="md">
+            <AppShell.Header
+                style={{
+                    background: 'var(--app-surface)',
+                    borderColor: 'var(--app-border)',
+                }}
+            >
+                <Group h="100%" px="xl" gap="md">
                     <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-                    <Title order={3}>{t('app_title')}</Title>
-                    <Group ml="auto" visibleFrom="sm" gap="xl">
-                        <Group gap="md">
-                            <Anchor component={Link} href="/" underline="hover" fw={500} size="sm" c="dimmed">
-                                {t('home')}
-                            </Anchor>
-                            <Anchor component={Link} href="/sites" underline="hover" fw={500} size="sm" c="dimmed">
-                                {t('publications')}
-                            </Anchor>
-                            <Anchor component={Link} href="/list" underline="hover" fw={500} size="sm" c="dimmed">
-                                {t('list')}
-                            </Anchor>
+                    <Anchor component={Link} href="/" underline="never" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                        <Box
+                            style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                display: 'grid',
+                                placeItems: 'center',
+                                background: 'var(--app-brand)',
+                                color: '#07080c',
+                                fontWeight: 800,
+                                fontSize: 13,
+                            }}
+                        >
+                            SSH
+                        </Box>
+                        <Box visibleFrom="xs">
+                            <Text fw={800} size="sm" lh={1.15}>Standard Site Hub</Text>
+                            <Text c="dimmed" size="xs" lh={1.15}>{t('app_title')}</Text>
+                        </Box>
+                    </Anchor>
+
+                    <Group ml="auto" visibleFrom="sm" gap="lg">
+                        <Group gap={4}>
+                            {navItems.map((item) => {
+                                const active = isActive(item.href);
+                                const Icon = item.icon;
+                                return (
+                                    <Anchor
+                                        key={item.href}
+                                        component={Link}
+                                        href={item.href}
+                                        underline="never"
+                                        fw={700}
+                                        size="sm"
+                                        px="sm"
+                                        py={7}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 6,
+                                            borderRadius: 8,
+                                            color: active ? 'var(--foreground)' : 'var(--app-text-muted)',
+                                            background: active ? 'light-dark(var(--mantine-color-brand-0), var(--mantine-color-dark-6))' : 'transparent',
+                                        }}
+                                    >
+                                        <Icon size={16} stroke={1.8} />
+                                        {item.label}
+                                    </Anchor>
+                                );
+                            })}
                         </Group>
 
                         <Group gap="xs">
-                            <ActionIcon
-                                onClick={() => setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')}
-                                variant="default"
-                                size="lg"
-                                aria-label={t('toggle_theme')}
-                            >
-                                {mounted ? (
-                                    computedColorScheme === 'light' ? <IconMoon size={20} stroke={1.5} /> : <IconSun size={20} stroke={1.5} />
-                                ) : (
-                                    <div style={{ width: 20, height: 20 }} />
-                                )}
-                            </ActionIcon>
-
                             <Menu shadow="md" width={200} position="bottom-end">
                                 <Menu.Target>
-                                    <ActionIcon variant="default" size="lg" aria-label={t('toggle_theme')}>
+                                    <ActionIcon variant="default" size="lg" aria-label={t('switch_language')}>
                                         <IconLanguage size={20} stroke={1.5} />
                                     </ActionIcon>
                                 </Menu.Target>
@@ -96,7 +130,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                                 <Menu shadow="md" width={200} position="bottom-end">
                                     <Menu.Target>
                                         <UnstyledButton style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <Avatar size="sm" color="blue" radius="xl">{handle?.charAt(0).toUpperCase() || 'U'}</Avatar>
+                                            <Avatar size="sm" color="brand" radius="xl">{handle?.charAt(0).toUpperCase() || 'U'}</Avatar>
                                             <IconChevronDown size={14} stroke={1.5} />
                                         </UnstyledButton>
                                     </Menu.Target>
@@ -120,22 +154,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     </Group>
 
                     <Group hiddenFrom="sm" ml="auto" gap="xs">
-                        <ActionIcon
-                            onClick={() => setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')}
-                            variant="default"
-                            size="lg"
-                            aria-label={t('toggle_theme')}
-                        >
-                            {mounted ? (
-                                computedColorScheme === 'light' ? <IconMoon size={20} stroke={1.5} /> : <IconSun size={20} stroke={1.5} />
-                            ) : (
-                                <div style={{ width: 20, height: 20 }} />
-                            )}
-                        </ActionIcon>
-
                         <Menu shadow="md" width={200} position="bottom-end">
                             <Menu.Target>
-                                <ActionIcon variant="default" size="lg" aria-label={t('toggle_theme')}>
+                                <ActionIcon variant="default" size="lg" aria-label={t('switch_language')}>
                                     <IconLanguage size={20} stroke={1.5} />
                                 </ActionIcon>
                             </Menu.Target>
@@ -148,7 +169,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                             <Menu shadow="md" width={200} position="bottom-end">
                                 <Menu.Target>
                                     <UnstyledButton style={{ display: 'flex', alignItems: 'center' }}>
-                                        <Avatar size="sm" color="blue" radius="xl">{handle?.charAt(0).toUpperCase() || 'U'}</Avatar>
+                                        <Avatar size="sm" color="brand" radius="xl">{handle?.charAt(0).toUpperCase() || 'U'}</Avatar>
                                     </UnstyledButton>
                                 </Menu.Target>
                                 <Menu.Dropdown>
@@ -171,13 +192,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </Group>
             </AppShell.Header>
 
-            <AppShell.Navbar p="md">
-                <Button component={Link} href="/" variant="subtle" fullWidth justify="flex-start" onClick={toggle}>{t('home')}</Button>
-                <Button component={Link} href="/sites" variant="subtle" fullWidth justify="flex-start" onClick={toggle}>{t('publications')}</Button>
-                <Button component={Link} href="/list" variant="subtle" fullWidth justify="flex-start" onClick={toggle}>{t('list')}</Button>
+            <AppShell.Navbar p="md" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
+                {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <Button
+                            key={item.href}
+                            component={Link}
+                            href={item.href}
+                            variant={isActive(item.href) ? 'light' : 'subtle'}
+                            color={isActive(item.href) ? 'brand' : 'gray'}
+                            fullWidth
+                            justify="flex-start"
+                            leftSection={<Icon size={16} />}
+                            onClick={toggle}
+                            mb="xs"
+                        >
+                            {item.label}
+                        </Button>
+                    );
+                })}
             </AppShell.Navbar>
 
-            <AppShell.Main>
+            <AppShell.Main style={{ minHeight: '100vh' }}>
                 {children}
                 <Footer />
             </AppShell.Main>

@@ -7,7 +7,9 @@
         "title": "Standard Site Hub",
         "logout": "ログアウト",
         "manage_publications": "サイトの管理",
+        "login_title": "おかえりなさい",
         "login_message": "続けるにはログインしてください。",
+        "login_divider": "または",
         "handle_label": "ハンドル",
         "handle_placeholder": "example.bsky.social",
         "login": "ログイン",
@@ -38,7 +40,8 @@
         "home": "ホーム",
         "publications": "サイト",
         "list": "リスト",
-        "toggle_theme": "テーマ切り替え"
+        "toggle_theme": "テーマ切り替え",
+        "switch_language": "言語を切り替え"
     },
     "Publications": {
         "title": "サイト",
@@ -62,7 +65,8 @@
         "verification_step_text": "ドメインに /.well-known/site.standard.publication エンドポイントを追加してください。レスポンスはレポジトリにあるあなたのサイトレコードの AT-URI である必要があります。",
         "verification_confirmation_text": "これにより、サイトとドメインの紐付けが確認されます。",
         "verification_request": "リクエスト",
-        "verification_response": "期待されるレスポンス"
+        "verification_response": "期待されるレスポンス",
+        "empty_sites": "まだサイトがありません。最初のサイトを作成してください。"
     },
     "EditSite": {
         "title": "サイトの編集",
@@ -171,7 +175,8 @@
         "delete_error": "削除失敗",
         "delete_error_message": "記事の削除中にエラーが発生しました。",
         "verified": "検証済み",
-        "verified_site_tooltip": "このサイトのドメインはAT-URIで検証されています"
+        "verified_site_tooltip": "このサイトのドメインはAT-URIで検証されています",
+        "empty_articles": "まだ記事がありません。最初の記事を追加してください。"
     },
     "NewArticle": {
         "title": "新規記事作成",

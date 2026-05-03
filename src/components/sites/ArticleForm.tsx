@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Title, TextInput, Textarea, Button, Stack, Group, TagsInput, FileInput, Text, Collapse, Image as MantineImage } from '@mantine/core';
+import { TextInput, Textarea, Button, Stack, Group, TagsInput, FileInput, Text, Collapse, Image as MantineImage, Paper, Divider, ThemeIcon } from '@mantine/core';
 import { createDocumentFormSchema } from '@/lib/validation/document';
 import { useForm } from '@mantine/form';
 import { verifyDocument } from '@/app/actions/verify';
@@ -9,7 +9,7 @@ import { fetchImageAsBase64 } from '@/app/actions/ogp';
 import { useTranslations } from 'next-intl';
 import * as TID from '@atcute/tid';
 import { notifications } from '@mantine/notifications';
-import { IconCheck, IconX, IconLoader2, IconCircleCheck, IconCircleX, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { IconCheck, IconX, IconLoader2, IconCircleCheck, IconCircleX, IconChevronDown, IconChevronUp, IconFileText, IconShieldCheck } from '@tabler/icons-react';
 import { VerificationResult } from '@/app/actions/verify';
 
 export interface FormValues {
@@ -223,55 +223,65 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
 
     return (
         <>
-            {titleLabel && <Title mb="lg">{titleLabel}</Title>}
             <form onSubmit={form.onSubmit(onSubmit)}>
-                <Stack>
-                    <Group align="end">
-                        <TextInput
-                            label={t('article_url')}
-                            placeholder="https://mysite.com/post/1"
-                            style={{ flex: 1 }}
-                            readOnly={mode === 'edit'}
-                            {...form.getInputProps('siteUrl')}
-                        />
-                        <Button onClick={handleVerify} loading={verifying} variant="light">{t('verify')}</Button>
-                    </Group>
+                <Paper withBorder className="app-panel" p={{ base: 'lg', sm: 'xl' }}>
+                    <Stack gap="lg">
+                        <Group gap="sm" align="center">
+                            <ThemeIcon size={42} radius="md" color="brand" variant="light">
+                                <IconFileText size={22} />
+                            </ThemeIcon>
+                            <Stack gap={2}>
+                                <Text fw={800}>{titleLabel || t('article_title')}</Text>
+                                <Text c="dimmed" size="sm">{t('verify')}</Text>
+                            </Stack>
+                        </Group>
+                        <Divider />
+                        <Group align="end">
+                            <TextInput
+                                label={t('article_url')}
+                                placeholder="https://mysite.com/post/1"
+                                style={{ flex: '1 1 260px' }}
+                                readOnly={mode === 'edit'}
+                                {...form.getInputProps('siteUrl')}
+                            />
+                            <Button onClick={handleVerify} loading={verifying} variant="light" leftSection={<IconShieldCheck size={16} />}>{t('verify')}</Button>
+                        </Group>
 
-                    {verificationResult?.success && !verificationResult?.fullyVerified && (
-                        <Text size="xs" c="orange" fw={500}>
-                            {t('partially_verified_note') || 'ページ情報の取得に成功しましたが、記事の検証は未完了です。このまま作成できます。'}
-                        </Text>
-                    )}
+                        {verificationResult?.success && !verificationResult?.fullyVerified && (
+                            <Text size="xs" c="orange" fw={500}>
+                                {t('partially_verified_note') || 'ページ情報の取得に成功しましたが、記事の検証は未完了です。このまま作成できます。'}
+                            </Text>
+                        )}
 
-                    {verificationResult?.steps && (
-                        <Stack gap="xs">
-                            <Group justify="space-between" onClick={() => setShowSteps(!showSteps)} style={{ cursor: 'pointer' }}>
-                                <Text size="sm" fw={500} c="dimmed">
-                                    {verificationResult.fullyVerified ? 'Protocol Verification Status' : 'Verification & Metadata Status'}
-                                </Text>
-                                {showSteps ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
-                            </Group>
-                            <Collapse expanded={showSteps}>
-                                <Stack gap="xs" pl="sm">
-                                    {verificationResult.steps.map((step, idx) => (
-                                        <Group key={idx} gap="xs">
-                                            {step.status === 'success' ? (
-                                                <IconCircleCheck size={16} color="var(--mantine-color-green-6)" />
-                                            ) : step.status === 'failure' ? (
-                                                <IconCircleX size={16} color="var(--mantine-color-red-6)" />
-                                            ) : (
-                                                <IconLoader2 size={16} className="animate-spin" />
-                                            )}
-                                            <Stack gap={0}>
-                                                <Text size="xs" fw={500}>{translateStepName(step.key)}</Text>
-                                                <Text size="xs" c="dimmed">{translateStepMessage(step.key, step.status, step.params)}</Text>
-                                            </Stack>
-                                        </Group>
-                                    ))}
-                                </Stack>
-                            </Collapse>
-                        </Stack>
-                    )}
+                        {verificationResult?.steps && (
+                            <Stack gap="xs" className="app-muted-panel" p="md" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
+                                <Group justify="space-between" onClick={() => setShowSteps(!showSteps)} style={{ cursor: 'pointer' }}>
+                                    <Text size="sm" fw={700} c="dimmed">
+                                        {verificationResult.fullyVerified ? 'Protocol Verification Status' : 'Verification & Metadata Status'}
+                                    </Text>
+                                    {showSteps ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+                                </Group>
+                                <Collapse expanded={showSteps}>
+                                    <Stack gap="xs">
+                                        {verificationResult.steps.map((step, idx) => (
+                                            <Group key={idx} gap="xs" wrap="nowrap" align="flex-start">
+                                                {step.status === 'success' ? (
+                                                    <IconCircleCheck size={16} color="var(--mantine-color-green-6)" />
+                                                ) : step.status === 'failure' ? (
+                                                    <IconCircleX size={16} color="var(--mantine-color-red-6)" />
+                                                ) : (
+                                                    <IconLoader2 size={16} className="animate-spin" />
+                                                )}
+                                                <Stack gap={0}>
+                                                    <Text size="xs" fw={600}>{translateStepName(step.key)}</Text>
+                                                    <Text size="xs" c="dimmed">{translateStepMessage(step.key, step.status, step.params)}</Text>
+                                                </Stack>
+                                            </Group>
+                                        ))}
+                                    </Stack>
+                                </Collapse>
+                            </Stack>
+                        )}
 
                     <TextInput
                         label={t('rkey')}
@@ -328,14 +338,18 @@ export function ArticleForm({ initialValues, onSubmit, isSubmitting, submitLabel
                         {...form.getInputProps('content')}
                     />
 
-                    <Button
-                        type="submit"
-                        loading={isSubmitting}
-                        disabled={mode === 'create' && !verificationResult?.success}
-                    >
-                        {submitLabel}
-                    </Button>
-                </Stack>
+                        <Group justify="flex-end" pt="sm">
+                            <Button
+                                type="submit"
+                                loading={isSubmitting}
+                                disabled={mode === 'create' && !verificationResult?.success}
+                                leftSection={<IconCheck size={16} />}
+                            >
+                                {submitLabel}
+                            </Button>
+                        </Group>
+                    </Stack>
+                </Paper>
             </form>
         </>
     );

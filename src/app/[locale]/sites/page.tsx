@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
-import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, ActionIcon, Modal, Code, Stack, Box } from '@mantine/core';
+import { Container, Title, Button, Group, Card, Text, SimpleGrid, Loader, Center, Badge, Tooltip, ActionIcon, Modal, Code, Stack, Box, Paper } from '@mantine/core';
 import NextImage from 'next/image';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -10,7 +10,7 @@ import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { SiteStandardPublication } from '@/lib/lexicons/site-standard-publication';
 import { verifyPublicationOwnership, PublicationVerificationResult } from '@/app/actions/verify-publication';
-import { IconTrash, IconArrowRight } from '@tabler/icons-react';
+import { IconTrash, IconArrowRight, IconPlus, IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { resolvePds } from '@/lib/pds';
 
@@ -153,13 +153,24 @@ export default function PublicationsPage() {
 
     return (
         <AuthGuard>
-            <Container size="lg" py="xl">
-                <Group justify="space-between" mb="lg">
-                    <Title>{t('title')}</Title>
-                    <Button variant="filled" color="dark" radius="md" component={Link} href="/sites/new">{t('create_new')}</Button>
+            <Container size="lg" py={{ base: 'lg', sm: 'xl' }} className="app-page">
+                <Group className="app-page-header">
+                    <Stack gap={4}>
+                        <Title order={1}>{t('title')}</Title>
+                        <Text c="dimmed" size="sm">{t('verification_instruction')}</Text>
+                    </Stack>
+                    <Button leftSection={<IconPlus size={18} />} component={Link} href="/sites/new">{t('create_new')}</Button>
                 </Group>
 
-                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+                {publications.length === 0 ? (
+                    <Center className="app-empty-state">
+                        <Stack gap="xs" align="center">
+                            <Text fw={700}>{t('create_new')}</Text>
+                            <Text c="dimmed" size="sm" ta="center">{t('empty_sites')}</Text>
+                        </Stack>
+                    </Center>
+                ) : (
+                <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
                     {publications.map((pub) => {
                         const verification = verificationStatus[pub.uri];
                         const isVerifying = verifying[pub.uri];
@@ -168,10 +179,10 @@ export default function PublicationsPage() {
                         const did = pub.uri.split('/')[2]; // at://did:plc:xxx/collection/rkey
 
                         return (
-                            <Card key={pub.uri} shadow="sm" padding="lg" radius="md" withBorder style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <Card.Section>
+                            <Card key={pub.uri} padding="lg" className="app-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                                <Card.Section style={{ position: 'relative' }}>
                                     {iconRef && did ? (
-                                        <Box h={160} w="100%" pos="relative" bg="gray.1">
+                                        <Box h={156} w="100%" pos="relative" bg="var(--app-surface-subtle)">
                                             <NextImage
                                                 src={getBlobUrl(userPds, did, iconRef)}
                                                 alt={pub.value.name}
@@ -182,7 +193,7 @@ export default function PublicationsPage() {
                                             />
                                         </Box>
                                     ) : (
-                                        <Center h={160} bg="gray.1">
+                                        <Center h={156} bg="var(--app-surface-subtle)">
                                             <Text c="dimmed">{t('icon')}</Text>
                                         </Center>
                                     )}
@@ -192,9 +203,10 @@ export default function PublicationsPage() {
                                         onClick={() => handleDeleteSite(pub.uri)}
                                         style={{
                                             position: 'absolute',
-                                            top: 10,
-                                            right: 10,
-                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                            top: 12,
+                                            right: 12,
+                                            backgroundColor: 'light-dark(rgba(255, 255, 255, 0.92), rgba(18, 28, 43, 0.92))',
+                                            border: '1px solid var(--app-border)',
                                         }}
                                         title={t('delete')}
                                     >
@@ -202,19 +214,19 @@ export default function PublicationsPage() {
                                     </ActionIcon>
                                 </Card.Section>
 
-                                <Group justify="space-between" mt="md" mb="xs" align="flex-start">
-                                    <Text fw={700} size="lg" lineClamp={2} style={{ flex: 1 }}>{pub.value.name}</Text>
+                                <Group justify="space-between" mt="md" mb="xs" align="flex-start" wrap="nowrap">
+                                    <Text fw={750} size="lg" lineClamp={2} style={{ flex: 1, lineHeight: 1.25 }}>{pub.value.name}</Text>
                                     {isVerifying ? (
                                         <Loader size="xs" />
                                     ) : verification?.verified ? (
                                         <Tooltip label={t('verified_tooltip')}>
-                                            <Badge color="green" variant="filled" leftSection="✓">
+                                            <Badge color="green" variant="light" leftSection={<IconShieldCheck size={12} />} style={{ flexShrink: 0 }}>
                                                 {t('verified')}
                                             </Badge>
                                         </Tooltip>
                                     ) : verification && !verification.verified ? (
                                         <Tooltip label={t('unverified_tooltip')}>
-                                            <Badge color="orange" variant="light">
+                                            <Badge color="orange" variant="light" leftSection={<IconAlertTriangle size={12} />} style={{ flexShrink: 0 }}>
                                                 {t('unverified')}
                                             </Badge>
                                         </Tooltip>
@@ -226,15 +238,13 @@ export default function PublicationsPage() {
                                 </Text>
 
                                 <Group justify="flex-end" mt="auto" pt="xl" gap="sm">
-                                    <Button variant="subtle" color="gray" size="sm" radius="xl" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
+                                    <Button variant="default" color="gray" size="sm" component={Link} href={`/sites/${pub.uri.split('/').pop()}/edit`}>
                                         {t('edit')}
                                     </Button>
                                     {verification?.verified ? (
                                         <Button 
                                             variant="filled" 
-                                            color="dark" 
                                             size="sm" 
-                                            radius="xl" 
                                             component={Link} 
                                             href={`/sites/${pub.uri.split('/').pop()}`}
                                             rightSection={<IconArrowRight size={16} />}
@@ -242,7 +252,7 @@ export default function PublicationsPage() {
                                             {t('manage_documents')}
                                         </Button>
                                     ) : (
-                                        <Button variant="light" color="orange" size="sm" radius="xl" onClick={() => handleOpenVerification(pub)}>
+                                        <Button variant="light" color="orange" size="sm" onClick={() => handleOpenVerification(pub)}>
                                             {t('verify_site')}
                                         </Button>
                                     )}
@@ -251,6 +261,7 @@ export default function PublicationsPage() {
                         );
                     })}
                 </SimpleGrid>
+                )}
 
                 <Modal opened={opened} onClose={close} title={<Text fw={700} size="lg">{t('verification_modal_title')}</Text>} size="lg" radius="md" overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}>
                     {selectedPub && (
@@ -259,19 +270,19 @@ export default function PublicationsPage() {
                                 {t('verification_step_text')}
                             </Text>
 
-                            <Paper withBorder p="md" radius="md" bg="var(--mantine-color-gray-0)">
+                            <Paper withBorder p="md" radius="md" className="app-muted-panel">
                                 <Stack gap="xs">
                                     <Group justify="space-between">
                                         <Text size="xs" fw={700} c="dimmed" tt="uppercase">{t('verification_request')}</Text>
                                     </Group>
-                                    <Code block p="sm" bg="white" style={{ border: '1px solid var(--mantine-color-gray-3)' }}>
+                                    <Code block p="sm" className="app-code-block">
                                         GET {wellKnownUrl}
                                     </Code>
                                 </Stack>
 
                                 <Stack gap="xs" mt="md">
                                     <Text size="xs" fw={700} c="dimmed" tt="uppercase">{t('verification_response')}</Text>
-                                    <Code block p="sm" bg="white" style={{ border: '1px solid var(--mantine-color-gray-3)' }}>
+                                    <Code block p="sm" className="app-code-block">
                                         {selectedPub.uri}
                                     </Code>
                                 </Stack>
@@ -284,7 +295,6 @@ export default function PublicationsPage() {
                             <Group justify="flex-end" mt="md">
                                 <Button
                                     variant="filled"
-                                    color="dark"
                                     onClick={() => handleDownloadVerificationFile(selectedPub.uri)}
                                 >
                                     {t('download_verification_file')}

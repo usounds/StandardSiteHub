@@ -164,7 +164,7 @@ export default function EditArticlePage() {
 
     return (
         <AuthGuard>
-            <Container size="sm" py="xl">
+            <Container size="sm" py={{ base: 'lg', sm: 'xl' }} className="app-page">
                 <ArticleForm
                     initialValues={initialValues}
                     onSubmit={handleSubmit}

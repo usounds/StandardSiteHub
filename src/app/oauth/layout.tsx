@@ -1,6 +1,6 @@
-import { MantineProvider, ColorSchemeScript } from '@mantine/core';
-import '@mantine/core/styles.css';
+import { MantineProvider } from '@mantine/core';
 import { AuthProvider } from '@/lib/auth-context';
+import { theme } from '../theme';
 
 export const metadata = {
     title: 'OAuth Processing',
@@ -13,17 +13,10 @@ export default function OAuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" suppressHydrationWarning>
-            <head>
-                <ColorSchemeScript />
-            </head>
-            <body>
-                <MantineProvider>
-                    <AuthProvider>
-                        {children}
-                    </AuthProvider>
-                </MantineProvider>
-            </body>
-        </html>
+        <MantineProvider theme={theme} forceColorScheme="dark">
+            <AuthProvider>
+                {children}
+            </AuthProvider>
+        </MantineProvider>
     );
 }

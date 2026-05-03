@@ -7,7 +7,9 @@
     "title": "Standard Site Hub",
     "logout": "Logout",
     "manage_publications": "Manage Sites",
+    "login_title": "Welcome back",
     "login_message": "Please login to continue.",
+    "login_divider": "or",
     "handle_label": "Handle",
     "handle_placeholder": "example.bsky.social",
     "login": "Login",
@@ -38,7 +40,8 @@
     "home": "Home",
     "publications": "Sites",
     "list": "List",
-    "toggle_theme": "Toggle color scheme"
+    "toggle_theme": "Toggle color scheme",
+    "switch_language": "Switch language"
   },
   "Publications": {
     "title": "Sites",
@@ -62,7 +65,8 @@
     "verification_step_text": "Add a /.well-known/site.standard.publication endpoint to your domain. The response should be the AT-URI of your publication record.",
     "verification_confirmation_text": "This confirms the link between the publication and the domain.",
     "verification_request": "Request",
-    "verification_response": "Expected Response"
+    "verification_response": "Expected Response",
+    "empty_sites": "No sites yet. Create your first site to get started."
   },
   "EditSite": {
     "title": "Edit Site",
@@ -171,7 +175,8 @@
     "delete_error": "Delete Failed",
     "delete_error_message": "An error occurred while deleting the article.",
     "verified": "Verified",
-    "verified_site_tooltip": "This site's domain ownership has been verified via AT-URI"
+    "verified_site_tooltip": "This site's domain ownership has been verified via AT-URI",
+    "empty_articles": "No articles yet. Add your first article to this site."
   },
   "NewArticle": {
     "title": "Create New Article",
