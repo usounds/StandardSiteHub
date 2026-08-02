@@ -24,6 +24,17 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const SESSION_RESTORE_TIMEOUT_MS = 5000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timeout = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+
+        promise
+            .then(resolve, reject)
+            .finally(() => window.clearTimeout(timeout));
+    });
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | undefined>(undefined);
@@ -35,8 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        configureAtprotoOAuth();
-        queueMicrotask(() => setIsConfigured(true));
+        try {
+            configureAtprotoOAuth();
+        } catch (err) {
+            console.error('Failed to configure OAuth', err);
+        } finally {
+            queueMicrotask(() => setIsConfigured(true));
+        }
     }, []);
 
     const fetchHandle = useCallback(async (did: string) => {
@@ -61,7 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             if (did && stored.includes(did as Did)) {
-                const sess = await getSession(did as Did);
+                const sess = await withTimeout(
+                    getSession(did as Did),
+                    SESSION_RESTORE_TIMEOUT_MS,
+                    'Timed out while restoring OAuth session.',
+                );
                 setSession(sess);
 
                 const newAgent = new Client({
@@ -70,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setAgent(newAgent);
 
                 // Fetch handle before finishing loading
-                await fetchHandle(sess.info.sub);
+                await withTimeout(
+                    fetchHandle(sess.info.sub),
+                    SESSION_RESTORE_TIMEOUT_MS,
+                    'Timed out while fetching profile handle.',
+                );
             }
         } catch (err) {
             console.error('Failed to restore session', err);

@@ -6,19 +6,19 @@ export const theme = createTheme({
   defaultRadius: 'md',
   colors: {
     brand: [
-      '#fff0f7',
-      '#ffd9ea',
-      '#ffb1d2',
-      '#fb84b7',
-      '#f45b9f',
-      '#ee3f8d',
-      '#df2478',
-      '#bd1662',
-      '#9d1555',
-      '#84164b',
+      '#e8f4ff',
+      '#cfe8ff',
+      '#9dd0ff',
+      '#69b7ff',
+      '#3aa0ff',
+      '#1185fe',
+      '#006fdc',
+      '#0056ad',
+      '#004282',
+      '#00315f',
     ],
   },
-  primaryShade: { light: 6, dark: 3 },
+  primaryShade: { light: 6, dark: 5 },
   headings: {
     fontFamily: 'var(--font-inter), sans-serif',
     sizes: {
@@ -36,7 +36,7 @@ export const theme = createTheme({
       },
       styles: {
         root: {
-          boxShadow: '0 0 26px color-mix(in srgb, var(--app-brand) 22%, transparent)',
+          boxShadow: '0 0 28px color-mix(in srgb, var(--app-brand) 28%, transparent)',
         },
       },
     },

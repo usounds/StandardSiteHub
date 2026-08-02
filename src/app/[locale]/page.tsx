@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Title, Text, Button, Stack, Center, Paper, Group, ThemeIcon } from '@mantine/core';
+import { Container, Title, Text, Button, Stack, Paper, Group, ThemeIcon } from '@mantine/core';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/routing';
@@ -9,15 +9,7 @@ import { IconArrowRight, IconChecks, IconWorldCog } from '@tabler/icons-react';
 
 export default function Home() {
   const t = useTranslations('Index');
-  const { session, handle, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <Center h="100vh">
-        <Text size="lg">Loading...</Text>
-      </Center>
-    );
-  }
+  const { session, handle } = useAuth();
 
   return (
     <Container size="lg" className="app-hero">
@@ -33,7 +25,7 @@ export default function Home() {
             <Title order={1} className="app-hero-title" maw={900}>
               {t('title')}
             </Title>
-            <Text c="var(--app-text-muted)" size="xl" maw={680} lh={1.55} fw={650}>
+            <Text c="var(--app-text-muted)" size="xl" maw={680} lh={1.55} fw={500}>
               {t('description')}
             </Text>
           </Stack>

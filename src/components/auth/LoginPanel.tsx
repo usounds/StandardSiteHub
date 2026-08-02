@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Stack, Text, Autocomplete, Button, Group, Avatar, Paper, ComboboxItem, Divider, ThemeIcon } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useLocale, useTranslations } from 'next-intl';
@@ -29,6 +29,38 @@ export function LoginPanel() {
     const [suggestions, setSuggestions] = useState<ActorComboboxItem[]>([]);
     const [isLoginLoading, setIsLoginLoading] = useState(false);
     const [isAtPassportLoading, setIsAtPassportLoading] = useState(false);
+    const atPassportAuth = useMemo(() => {
+        if (typeof window === 'undefined') return null;
+
+        let returnTo = getCurrentReturnTo();
+        if (returnTo === `/${locale}` || returnTo === `/${locale}/`) {
+            returnTo = `/${locale}/sites`;
+        }
+
+        try {
+            const atp = createAtPassportClient(window.location.origin, locale);
+            return atp.generateAuthUrl({ returnTo });
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }, [locale]);
+    const atPassportAuthUrl = atPassportAuth ? String(atPassportAuth.url) : '#';
+
+    useEffect(() => {
+        const resetPendingLogin = () => {
+            setIsLoginLoading(false);
+            setIsAtPassportLoading(false);
+        };
+
+        window.addEventListener('pageshow', resetPendingLogin);
+        window.addEventListener('focus', resetPendingLogin);
+
+        return () => {
+            window.removeEventListener('pageshow', resetPendingLogin);
+            window.removeEventListener('focus', resetPendingLogin);
+        };
+    }, []);
 
     const handleLogin = async () => {
         if (!loginHandle) return;
@@ -52,29 +84,17 @@ export function LoginPanel() {
     };
 
     const handleAtPassportLogin = () => {
-        setIsAtPassportLoading(true);
-        try {
-            let returnTo = getCurrentReturnTo();
-            if (returnTo === `/${locale}` || returnTo === `/${locale}/`) {
-                returnTo = `/${locale}/sites`;
-            }
-
-            const atp = createAtPassportClient(window.location.origin, locale);
-            const { url, atpstate } = atp.generateAuthUrl({
-                returnTo,
-            });
-
-            setAtPassportState(atpstate);
-            window.location.href = url;
-        } catch (error) {
-            console.error(error);
+        if (!atPassportAuth) {
             notifications.show({
                 title: t('login_error_title'),
                 message: t('login_error_message'),
                 color: 'red',
             });
-            setIsAtPassportLoading(false);
+            return;
         }
+
+        setIsAtPassportLoading(true);
+        setAtPassportState(atPassportAuth.atpstate);
     };
 
     const handleInput = useDebouncedCallback(async (val: string) => {
@@ -121,15 +141,21 @@ export function LoginPanel() {
                     </Text>
                 </Stack>
 
-                <Button
-                    onClick={handleAtPassportLogin}
-                    fullWidth
-                    size="md"
-                    loading={isAtPassportLoading}
-                    leftSection={<AtPassportIcon size={22} />}
+                <a
+                    href={atPassportAuthUrl}
+                    onClick={(event) => {
+                        if (!atPassportAuth) {
+                            event.preventDefault();
+                        }
+                        handleAtPassportLogin();
+                    }}
+                    aria-disabled={!atPassportAuth}
+                    data-loading={isAtPassportLoading || undefined}
+                    className="app-login-primary"
                 >
-                    {AtPassportUI[getAtPassportLocale(locale)].title}
-                </Button>
+                    <AtPassportIcon size={22} />
+                    <span>{AtPassportUI[getAtPassportLocale(locale)].title}</span>
+                </a>
 
                 <Divider label={t('login_divider')} labelPosition="center" my={4} />
 

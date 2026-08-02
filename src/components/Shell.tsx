@@ -4,7 +4,7 @@ import { AppShell, Burger, Group, Menu, ActionIcon, Anchor, Button, Avatar, Unst
 import { useDisclosure } from '@mantine/hooks';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
-import { IconLanguage, IconLogout, IconChevronDown, IconHome, IconLayoutGrid, IconWorldSearch } from '@tabler/icons-react';
+import { IconLanguage, IconLogout, IconChevronDown, IconHome, IconLayoutGrid, IconWorldSearch, IconWorldCheck } from '@tabler/icons-react';
 import { useAuth } from '@/lib/auth-context';
 import { Footer } from './footer/Footer';
 
@@ -50,24 +50,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Group h="100%" px="xl" gap="md">
                     <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
                     <Anchor component={Link} href="/" underline="never" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                        <Box
-                            style={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: 8,
-                                display: 'grid',
-                                placeItems: 'center',
-                                background: 'var(--app-brand)',
-                                color: '#07080c',
-                                fontWeight: 800,
-                                fontSize: 13,
-                            }}
-                        >
-                            SSH
+                        <Box className="app-brand-mark" aria-hidden="true">
+                            <IconWorldCheck size={21} stroke={2.1} />
                         </Box>
                         <Box visibleFrom="xs">
                             <Text fw={800} size="sm" lh={1.15}>Standard Site Hub</Text>
-                            <Text c="dimmed" size="xs" lh={1.15}>{t('app_title')}</Text>
                         </Box>
                     </Anchor>
 
